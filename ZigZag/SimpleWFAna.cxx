@@ -9,26 +9,27 @@ namespace larlite {
 
 // Function to draw digital waveforms
 void drawWF( const std::vector<short int> ad, int size, double offset ) {
-	// Variables to draw on graph
-	double x[size], y[size];
+    // Variables to draw on graph
+    size = 300;
+    double x[size], y[size];
     int n = size;
-	// Fill variables with digital wavform information
-	// x in units of ticks = 0.5us, y in units of ADCs
+    // Fill variables with digital wavform information
+    // x in units of ticks = 0.5us, y in units of ADCs
     // To just draw part change size and l's on RHS of = to start point
     for(int l=0;l<n;l++) {
-		x[l] = l;
-		y[l] = ad[l]-offset;
+        x[l] = l+3500;
+        y[l] = ad[l+3500]-offset;
     }
-	// Create new canvas and graph and draw on waveform
-	TCanvas *c1 = new TCanvas("c1","Waveform Graph",1100,400);
+    // Create new canvas and graph and draw on waveform
+    TCanvas *c1 = new TCanvas("c1","Waveform Graph",1100,400);
     TGraph *gr = new TGraph(size,x,y);
-	gr->SetLineWidth(1);
-	gr->SetLineColorAlpha(kBlue,1);
+    gr->SetLineWidth(1);
+    gr->SetLineColorAlpha(kBlue,1);
     gr->SetMarkerStyle(1);
     gr->SetMarkerSize(1);
     gr->GetXaxis()->SetTitle("Ticks /0.5us");
     gr->GetYaxis()->SetTitle("ADCs");
-	gr->Draw();
+    gr->Draw();
     c1->Update();
     c1->GetFrame()->SetFillColor(21);
     c1->GetFrame()->SetBorderSize(12);
@@ -37,165 +38,157 @@ void drawWF( const std::vector<short int> ad, int size, double offset ) {
 
 // Function to determine of wire is hit or not
 int hitCount(const std::vector<short int> adcs, double T, double offset) {
-	int flag = 0;
-	size_t l = 0;
-	int hit = 0;
-	// Determine if wire is hit or not
-	while(flag == 0 && l<adcs.size()){
-	double x = adcs[l];
-	if((x-offset)>T||(x-offset)<-T){
-		hit = hit + 1;
-		flag = 1;
-	}
-	l++;
-	}
-	return hit;
+    int flag = 0;
+    size_t l = 0;
+    int hit = 0;
+    // Determine if wire is hit or not
+    while(flag == 0 && l<adcs.size()){
+        double x = adcs[l];
+        if((x-offset)>T||(x-offset)<-T){
+            hit = hit + 1;
+            flag = 1;
+        }
+        l++;
+    }
+    return hit;
 }
 
 // Function that calculates number of hits on a wire assuming the beginning of one hit and end of another are separated by 150 TDCs
 int hitPerWire(const std::vector<short int> adcs, double T, double offset) {
-	size_t l = 0;
-	int hit = 0;
-	// Determine if wire is hit or not
-	while(l<adcs.size()){
-	double x = adcs[l];
-	if((x-offset)>T||(x-offset)<-T){
-		// add one to hit counter
-		hit = hit + 1;
-		// skip ahead by 150 TDCs
-		l = l + 150;
-	}
-	l++;
-	}
-	return hit;
+    size_t l = 0;
+    int hit = 0;
+    // Determine if wire is hit or not
+    while(l<adcs.size()){
+        double x = adcs[l];
+        if((x-offset)>T||(x-offset)<-T){
+            // add one to hit counter
+            hit = hit + 1;
+            // skip ahead by 150 TDCs
+            l = l + 150;
+        }
+        l++;
+    }
+    return hit;
 }
 
 // Function that returns the TDC of the start of each hit
 std::vector<int> hitTDC(const std::vector<short int> adcs, double T, double offset) {
-	// Initialize TDC variable and vector to store
-	size_t l = 0;
-	std::vector<int> v_TDCs;
-	// Determine if wire is hit or not
-	while(l<adcs.size()){
-		double x = adcs[l];
-		if((x-offset)>T||(x-offset)<-T){
-			// if wire is hit record TDC time of when it occurs
-			int TDC = l;
-			v_TDCs.push_back(TDC);
-			l = l + 150;
-		}
-		l++;
-	}
-	return v_TDCs;
+    // Initialize TDC variable and vector to store
+    size_t l = 0;
+    std::vector<int> v_TDCs;
+    // Determine if wire is hit or not
+    while(l<adcs.size()){
+        double x = adcs[l];
+        if((x-offset)>T||(x-offset)<-T){
+            // if wire is hit record TDC time of when it occurs
+            int TDC = l;
+            v_TDCs.push_back(TDC);
+            l = l + 150;
+        }
+        l++;
+    }
+    return v_TDCs;
 }
 
 // Function that returns maximum height of each hit in ADC units
 std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double offset) {
-	size_t l = 0;
-	std::vector<double> v_ADCamp;
-	double max = 0;
-	// Determine if wire is hit or not
-	while(l<adcs.size()){
-		double y =pow(pow(adcs[l]-offset,2),0.5);
-		if((y)>T){
-			// If threshold is passed set max as this point
-			max = y;
-			// Loop over max size of peak and find the most extremal point
-			for(size_t i = 1;i<150;i++){
-				double yp = pow(pow(adcs[l+i]-offset,2),0.5);
-				if(yp>max){
-					max = yp;
-				}
-			}
-			// Push on to vector of amplitudes
-			v_ADCamp.push_back(max);
-			l = l + 150;
-		}
-		l++;
-	}
-	return v_ADCamp;
+    size_t l = 0;
+    std::vector<double> v_ADCamp;
+    double max = 0;
+    // Determine if wire is hit or not
+    while(l<adcs.size()){
+        double y =pow(pow(adcs[l]-offset,2),0.5);
+        if((y)>T){
+            // If threshold is passed set max as this point
+            max = y;
+            // Loop over max size of peak and find the most extremal point
+            for(size_t i = 1;i<150;i++){
+                double yp = pow(pow(adcs[l+i]-offset,2),0.5);
+                if(yp>max){
+	            max = yp;
+                }
+            }
+            // Push on to vector of amplitudes
+            v_ADCamp.push_back(max);
+            l = l + 150;
+        }
+        l++;
+    }
+    return v_ADCamp;
 }
 
 // Function to return average
 double wireAve(double* hitNo) {
-	// Calculate average - doesn't have to be hits
-	double avHN = 0;
-	for(int j=0; j<100; ++j)
-	avHN += hitNo[j];
-	avHN /= (100);
-	return avHN;
+    // Calculate average - doesn't have to be hits
+    double avHN = 0;
+    for(int j=0; j<100; ++j)
+    avHN += hitNo[j];
+    avHN /= (100);
+    return avHN;
 }
 
 // Function to return standard error
 double wireStd(double* hitNo, double avHN) {
-	// Calculate standard error on the mean in number of hits
-	double stDev = 0;
-	for(int k=0; k<100; ++k)
-	  stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
-	stDev = sqrt( stDev /(100*99));
-	return stDev;
+    // Calculate standard error on the mean in number of hits
+    double stDev = 0;
+    for(int k=0; k<100; ++k)
+      stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
+    stDev = sqrt( stDev /(100*99));
+    return stDev;
 }
 
 // Function to return standard deviation of TDC
 float TDCstd(std::vector<int> TDCvec) {
-	// Calculate mean
-	float meanTDC(0), stdTDC(0);
-	for (size_t f=0; f<TDCvec.size(); ++f) {
-		meanTDC += TDCvec[f];
-	}
-	meanTDC /= ((float)TDCvec.size());
-	// Calculate standard deviation
-	for(size_t k=0; k<TDCvec.size(); ++k)
-	  stdTDC += (TDCvec[k]-meanTDC)*(TDCvec[k]-meanTDC);
-	stdTDC = sqrt( stdTDC / ((float)TDCvec.size()));
-	return stdTDC;
+    // Calculate mean
+    float meanTDC(0), stdTDC(0);
+    for (size_t f=0; f<TDCvec.size(); ++f) {
+        meanTDC += TDCvec[f];
+    }
+    meanTDC /= ((float)TDCvec.size());
+    // Calculate standard deviation
+    for(size_t k=0; k<TDCvec.size(); ++k)
+      stdTDC += (TDCvec[k]-meanTDC)*(TDCvec[k]-meanTDC);
+    stdTDC = sqrt( stdTDC / ((float)TDCvec.size()));
+    return stdTDC;
 }
 
 // Function to calculate interquartile range of TDC
 int TDCiqr(std::vector<int> TDCvec, int hitNo) {
-	// order TDC's by value
-	std::sort(TDCvec.begin(),TDCvec.end());
-	int quart =(int) hitNo/4;
+    // order TDC's by value
+    std::sort(TDCvec.begin(),TDCvec.end());
+    int quart =(int) hitNo/4;
     int TDCq1 = TDCvec[quart];
-	int TDCq3 = TDCvec[3*quart];
-	int iqrTDC = TDCq3 - TDCq1;
-	return iqrTDC;
+    int TDCq3 = TDCvec[3*quart];
+    int iqrTDC = TDCq3 - TDCq1;
+    return iqrTDC;
 }
 // calculate mean ADC amplitude
 double ampMean(std::vector<double> ADCvec) {
-	// calculate mean
-	double meanADC(0);
-	for(size_t f=0; f<ADCvec.size(); ++f) {
-		meanADC += ADCvec[f];
-	}
-	meanADC /= ((double)ADCvec.size());
-	return meanADC;
+    // calculate mean
+    double meanADC(0);
+    for(size_t f=0; f<ADCvec.size(); ++f) {
+        meanADC += ADCvec[f];
+    }
+    meanADC /= ((double)ADCvec.size());
+    return meanADC;
 }
 // calculate standard deviation of amplitude
 double ampStd(std::vector<double> ADCvec,double meanADC) {
-	// calculate standard deviation
-	double stdADC(0);
-	for(size_t k=0; k<ADCvec.size(); ++k)
-		stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
-	stdADC = sqrt( stdADC / ((double)ADCvec.size()));
-	return stdADC;
+    // calculate standard deviation
+    double stdADC(0);
+    for(size_t k=0; k<ADCvec.size(); ++k)
+      stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
+    stdADC = sqrt( stdADC / ((double)ADCvec.size()));
+    return stdADC;
 }
 
 // ---- MEMBER FUNCTIONS ---- //
 
-  // Called at beginning of event loop
-  bool SimpleWFAna::initialize() {
+// Called at beginning of event loop
+bool SimpleWFAna::initialize() {
 
     // Set event number to 0
     _evtN = 0;
-    // Create TTree with branches
-    _t_ch = new TTree("ch_tree","");
-    _t_ch->Branch("larch",&_larch,"larch/i");
-    _t_ch->Branch("rms",&_rms,"rms/F");
-    _t_ch->Branch("evt",&_evtN,"evt/i");
-    _t_ch->Branch("mean",&_mean,"mean/F");
-    //_t_ch->Branch("isHit",&_isHit,"isHit/i");
-    _t_ch->SetDirectory(0);
 
 // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
     /*// Ask for event and wire number to display graph of digital waveform
@@ -222,28 +215,28 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     CCCOno = 0;
     NCCOno = 0;
     // Book histograms
-    h_HITS = new TH1I("h_HITS","",70,0,7000);
-    h_UHITS = new TH1I("h_UHITS","",40,0,2000);
-    h_VHITS = new TH1I("h_VHITS","",40,0,2000);
-    h_YHITS = new TH1I("h_YHITS","",60,0,3000);
-    h_UVHITS = new TH2I("h_UVHITS","",40,0,2000,40,0,2000);
+    h_HITS = new TH1I("h_HITS","",60,0,800000);
+    h_UHITS = new TH1I("h_UHITS","",45,0,300000);
+    h_VHITS = new TH1I("h_VHITS","",45,0,300000);
+    h_YHITS = new TH1I("h_YHITS","",60,0,400000);
+    h_UVHITS = new TH2I("h_UVHITS","",45,0,300000,60,0,400000);
     h_HITvAMP = new TH1I("h_HITvAMP","",80,0,200);
     h_QCUT = new TH1D("h_QCUT","",50,0,10);
-	h_QNCUT = new TH1D("h_QNCUT","",50,0,10);
+    h_QNCUT = new TH1D("h_QNCUT","",50,0,10);
 
     // Count event types
-	if(!Type.empty()){
-	for(int i=0;i<100;i++){
-		if(Type[i]==0){CCQEno=CCQEno+1;}
-		if(Type[i]==1){NCQEno=NCQEno+1;}
-		if(Type[i]==2){CCREno=CCREno+1;}
-		if(Type[i]==3){NCREno=NCREno+1;}
-		if(Type[i]==4){CCDISno=CCDISno+1;}
-		if(Type[i]==5){NCDISno=NCDISno+1;}
-		if(Type[i]==6){CCCOno=CCCOno+1;}
-		if(Type[i]==7){NCCOno=NCCOno+1;}
-	}}
-
+    if(!Type.empty()){
+        for(int i=0;i<100;i++){
+            if(Type[i]==0){CCQEno=CCQEno+1;}
+            if(Type[i]==1){NCQEno=NCQEno+1;}
+            if(Type[i]==2){CCREno=CCREno+1;}
+            if(Type[i]==3){NCREno=NCREno+1;}
+            if(Type[i]==4){CCDISno=CCDISno+1;}
+            if(Type[i]==5){NCDISno=NCDISno+1;}
+            if(Type[i]==6){CCCOno=CCCOno+1;}
+            if(Type[i]==7){NCCOno=NCCOno+1;}
+	}
+    }
     return true;
   }
   
@@ -260,26 +253,26 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     }
     // If truth data is present record interaction type and energy of each event
     if(truthflag==1){
-		auto const& mct = (*ev_mct).at(0);
-		// Get neutrino info
-		auto const& neut = (mct.GetNeutrino());
-		// Get charged current or neutral current
-		int ccnc = neut.CCNC();
-		// Get interaction type
-		int intMode = neut.Mode();
-		// Store neutrino energy
-		Qsq.push_back(neut.Nu().Trajectory()[0].E());
-		if(intMode==0&&ccnc==0){Type.push_back(0);}//CCQE
-		else if(intMode==0&&ccnc==1){Type.push_back(1);}//NCQE
-		else if(intMode==1&&ccnc==0){Type.push_back(2);}//CCRE
-		else if(intMode==1&&ccnc==1){Type.push_back(3);}//NCRE
-		else if(intMode==2&&ccnc==0){Type.push_back(4);}//CCDIS
-		else if(intMode==2&&ccnc==1){Type.push_back(5);}//NCDIS
-		else if(intMode==3&&ccnc==0){Type.push_back(6);}//CCCO
-		else if(intMode==3&&ccnc==1){Type.push_back(7);}//NCCO
-		else{std::cout<<"ERROR IN MCTRUTH INFO"<<std::endl;return false;}
-		_evtN += 1;
-		return true;
+        auto const& mct = (*ev_mct).at(0);
+        // Get neutrino info
+        auto const& neut = (mct.GetNeutrino());
+        // Get charged current or neutral current
+        int ccnc = neut.CCNC();
+        // Get interaction type
+        int intMode = neut.Mode();
+        // Store neutrino energy
+        Qsq.push_back(neut.Nu().Trajectory()[0].E());
+        if(intMode==0&&ccnc==0){Type.push_back(0);}//CCQE
+        else if(intMode==0&&ccnc==1){Type.push_back(1);}//NCQE
+        else if(intMode==1&&ccnc==0){Type.push_back(2);}//CCRE
+        else if(intMode==1&&ccnc==1){Type.push_back(3);}//NCRE
+        else if(intMode==2&&ccnc==0){Type.push_back(4);}//CCDIS
+        else if(intMode==2&&ccnc==1){Type.push_back(5);}//NCDIS
+        else if(intMode==3&&ccnc==0){Type.push_back(6);}//CCCO
+        else if(intMode==3&&ccnc==1){Type.push_back(7);}//NCCO
+        else{std::cout<<"ERROR IN MCTRUTH INFO"<<std::endl;return false;}
+        _evtN += 1;
+        return true;
     }
 
     // Get rawdigit data
@@ -297,11 +290,11 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     yHit = 0;
 
 // ****** UNCOMMENT TO CUT ON INTEGRATED WAVEFORMS ****** //
-    /*// Initialize integration counter for event
+    // Initialize integration counter for event
     intADC = 0;
     UintADC = 0;
     VintADC = 0;
-    YintADC = 0;*/
+    YintADC = 0;
 
 // ****** UNCOMMENT TO CUT ON TDC SPREAD ****** //
     /*// Clear TDC vectors
@@ -311,7 +304,7 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     YTDCvec.clear();*/
 
 // ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
-	/*// Clear ADC vectors
+    /*// Clear ADC vectors
     ADCvec.clear();
     UADCvec.clear();
     VADCvec.clear();
@@ -319,84 +312,74 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
 
     // Loop over all wires in event
     for (size_t i=0; i < wfs->size(); i++){
-		// get waveform from wire i
-		auto const& wf = (*wfs).at(i);
-		// record channel/wire number
-		int chnum = wf.Channel();
-		_larch = chnum;
-		// Convert from analogue to digital
-		auto const& adcs = wf.ADCs();
-      
-		// Calculate Mean
-		for(size_t j=0; j<adcs.size(); ++j)
-		  _mean += adcs[j];
-		_mean /= ((float)adcs.size());
-		// Calculate RMS/Standard Deviation
-		for(size_t k=0; k<adcs.size(); ++k)
-		  _rms += (adcs[k]-_mean)*(adcs[k]-_mean);
-		_rms = sqrt( _rms / ((float)adcs.size()));
+        // get waveform from wire i
+        auto const& wf = (*wfs).at(i);
+        // Convert from analogue to digital
+        auto const& adcs = wf.ADCs();
 
-		// Calculate offset from mean
-		double offset = static_cast<double>(_mean);
-		// Get tolerance from python script
-		double T = SimpleWFAna::GetT();
+        // Calculate Mean
+        for(size_t j=0; j<adcs.size(); ++j)
+          _mean += adcs[j];
+        _mean /= ((float)adcs.size());
 
-		// Calculate total number of hits
-		// Add to hit counter for event
-		// Change to hitCount() for number of hit wires
-		_isHit = _isHit + hitPerWire(adcs,T,offset);
-		// Separate into wire planes
-		if(i<2400){uHit = uHit + hitPerWire(adcs,T,offset);}
-		if(i>=2400&&i<4800){vHit = vHit + hitPerWire(adcs,T,offset);}
-		if(i>=4800&&i<8256){yHit = yHit + hitPerWire(adcs,T,offset);}
+        // Calculate offset from mean
+        double offset = static_cast<double>(_mean);
+        // Get tolerance from python script
+        double T = SimpleWFAna::GetT();
+
+        // Calculate total number of hits
+        // Add to hit counter for event
+        // Change to hitCount() for number of hit wires
+        _isHit = _isHit + hitPerWire(adcs,T,offset);
+        // Separate into wire planes
+        if(i<2400){uHit = uHit + hitPerWire(adcs,T,offset);}
+        if(i>=2400&&i<4800){vHit = vHit + hitPerWire(adcs,T,offset);}
+        if(i>=4800&&i<8256){yHit = yHit + hitPerWire(adcs,T,offset);}
 
 // ****** UNCOMMENT TO CUT ON INTEGRATED WAVEFORMS ****** //
-		/*// Loop over TDC time
-		for(size_t j=0;j<adcs.size()-1;++j){
-			// Get offset adjusted modulus of two points
-			double x1 = pow(pow(adcs[j]-offset,2),0.5);
-			double x2 = pow(pow(adcs[j+1]-offset,2),0.5);
-			// If both above tolerance add up area between them
-			if(x1>T&&x2>T){
-				intADC = intADC + 0.5*x1 + 0.5*x2;
-				if(i<2400){UintADC = UintADC + 0.5*x1 + 0.5*x2;}
-				if(i>=2400&&i<4800){VintADC = VintADC + 0.5*x1 + 0.5*x2;}
-				if(i>=4800&&i<8256){YintADC = YintADC + 0.5*x1 + 0.5*x2;}
-		  }
-		}*/
+    // Loop over TDC time
+    for(size_t j=0;j<adcs.size()-1;++j){
+        // Get offset adjusted modulus of two points
+        double x1 = pow(pow(adcs[j]-offset,2),0.5);
+        double x2 = pow(pow(adcs[j+1]-offset,2),0.5);
+        // If both above tolerance add up area between them
+        if(x1>T&&x2>T){
+            intADC = intADC + 0.5*x1 + 0.5*x2;
+            if(i<2400){UintADC = UintADC + 0.5*x1 + 0.5*x2;}
+            if(i>=2400&&i<4800){VintADC = VintADC + 0.5*x1 + 0.5*x2;}
+            if(i>=4800&&i<8256){YintADC = YintADC + 0.5*x1 + 0.5*x2;}
+        }
+    }
 
 // ****** UNCOMMENT TO CUT ON TDC SPREAD ****** //
-		/*// Get TDCs of hits and sort into planes
-		std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
-		for (size_t f=0; f<v_TDCs.size(); ++f) {
-			TDCvec.push_back(v_TDCs[f]);
-			if(i<2400){UTDCvec.push_back(v_TDCs[f]);}
-			if(i>=2400&&i<4800){VTDCvec.push_back(v_TDCs[f]);}
-			if(i>=4800&&i<8256){YTDCvec.push_back(v_TDCs[f]);}
-		}*/
+    /*// Get TDCs of hits and sort into planes
+    std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
+    for (size_t f=0; f<v_TDCs.size(); ++f) {
+        TDCvec.push_back(v_TDCs[f]);
+        if(i<2400){UTDCvec.push_back(v_TDCs[f]);}
+        if(i>=2400&&i<4800){VTDCvec.push_back(v_TDCs[f]);}
+        if(i>=4800&&i<8256){YTDCvec.push_back(v_TDCs[f]);}
+    }*/
 
 // ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
-		  /*// Get ADC amplitudes of hits and sort into planes
-		  std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
-		  for (size_t f=0; f<v_ADCamp.size(); ++f) {
-			  ADCvec.push_back(v_ADCamp[f]);
-			  if(i<2400){UADCvec.push_back(v_ADCamp[f]);}
-			  if(i>=2400&&i<4800){VADCvec.push_back(v_ADCamp[f]);}
-			  if(i>=4800&&i<8256){YADCvec.push_back(v_ADCamp[f]);}
-		  }*/
+    /*// Get ADC amplitudes of hits and sort into planes
+    std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
+    for (size_t f=0; f<v_ADCamp.size(); ++f) {
+        ADCvec.push_back(v_ADCamp[f]);
+        if(i<2400){UADCvec.push_back(v_ADCamp[f]);}
+        if(i>=2400&&i<4800){VADCvec.push_back(v_ADCamp[f]);}
+        if(i>=4800&&i<8256){YADCvec.push_back(v_ADCamp[f]);}
+    }*/
 
 // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
-		  /*//Draw digital waveform for channel i
-	      int w = i;
-		  if(w == wire && _evtN == event) {
-		  	  int size = 9600;
-		  	  drawWF(adcs,size,offset);
-		  }*/
+    //Draw digital waveform for channel i
+    /*int w = i;
+    if(w == wire && _evtN == event) {
+        int size = 9600;
+        drawWF(adcs,size,offset);
+    }*/
 
-	      // Fill TTree
-		  _t_ch->Fill();	
-
-	}
+  }
 
 // ****** UNCOMMENT TO CUT ON TDC STANDARD DEVIATION ****** //
     /*// Calculate standard deviations of TDCs of hits in each plane
@@ -430,13 +413,13 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
 
     // Fill arrays with whatever variable you want to cut - nothing beyond here should have to be changed
     // Work with _isHit/uHit, intADC, stdTDC, iqrTDC, MampADC
-    hitNo[en] = _isHit;
-    uhitNo[en] = uHit;
-    vhitNo[en] = vHit;
-    yhitNo[en] = yHit;
+    hitNo[en] = intADC;
+    uhitNo[en] = UintADC;
+    vhitNo[en] = VintADC;
+    yhitNo[en] = YintADC;
 
 // ****** UNCOMMENT TO CALCULTE ADC AMPLITUDE STANDARD DEVIATIONS ****** //
-    /**sDev[en] = SDamoADC;
+    /**sDev[en] = SDampADC;
     usDev[en] = USDampADC;
     vsDev[en] = VSDampADC;
     ysDev[en] = YSDampADC;*/
@@ -444,15 +427,15 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     // Fill histograms
     // Different cuts will need different ranges
     // Change variables as before
-    h_HITS->Fill(_isHit);
+    h_HITS->Fill(intADC);
     // Separate hits into the three wire planes
-    h_UHITS->Fill(uHit);
-    h_VHITS->Fill(vHit);
-    h_YHITS->Fill(yHit);
-    h_UVHITS->Fill(uHit,vHit);
+    h_UHITS->Fill(UintADC);
+    h_VHITS->Fill(VintADC);
+    h_YHITS->Fill(YintADC);
+    h_UVHITS->Fill(VintADC,YintADC);
 
     // Count number of removed events outside of some tolerance of hit wires
-	// Total cut
+    // Total cut
     if(hitNo[en]>Tmax||hitNo[en]<Tmin){removed = removed + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQE=removedCCQE+1;}
       if(Type[en]==1){removedNCQE=removedNCQE+1;}
@@ -462,8 +445,8 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDIS=removedNCDIS+1;}
       if(Type[en]==6){removedCCCO=removedCCCO+1;}
       if(Type[en]==7){removedNCCO=removedNCCO+1;}}
-	}
-	// Cut on U plane
+    }
+    // Cut on U plane
     if(uhitNo[en]>Umax||uhitNo[en]<Umin){removedu = removedu + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQEu=removedCCQEu+1;}
       if(Type[en]==1){removedNCQEu=removedNCQEu+1;}
@@ -473,8 +456,8 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISu=removedNCDISu+1;}
       if(Type[en]==6){removedCCCOu=removedCCCOu+1;}
       if(Type[en]==7){removedNCCOu=removedNCCOu+1;}}
-	}
-	// Cut on V plane
+    }
+    // Cut on V plane
     if(vhitNo[en]>Vmax||vhitNo[en]<Vmin){removedv = removedv + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQEv=removedCCQEv+1;}
       if(Type[en]==1){removedNCQEv=removedNCQEv+1;}
@@ -484,8 +467,8 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISv=removedNCDISv+1;}
       if(Type[en]==6){removedCCCOv=removedCCCOv+1;}
       if(Type[en]==7){removedNCCOv=removedNCCOv+1;}}
-	}
-	// Cut on Y plane
+    }
+    // Cut on Y plane
     if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){removedy = removedy + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQEy=removedCCQEy+1;}
       if(Type[en]==1){removedNCQEy=removedNCQEy+1;}
@@ -495,11 +478,11 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISy=removedNCDISy+1;}
       if(Type[en]==6){removedCCCOy=removedCCCOy+1;}
       if(Type[en]==7){removedNCCOy=removedNCCOy+1;}}
-	}
-	// Cut on U and V planes also fill cutting histograms
+    }
+    // Cut on U and V planes also fill cutting histograms
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){removeduv = removeduv + 1;
       if(!Type.empty()){h_QCUT->Fill(Qsq[en]); 
-	  if(Type[en]==0){removedCCQEuv=removedCCQEuv+1;}
+          if(Type[en]==0){removedCCQEuv=removedCCQEuv+1;}
       if(Type[en]==1){removedNCQEuv=removedNCQEuv+1;}
       if(Type[en]==2){removedCCREuv=removedCCREuv+1;}
       if(Type[en]==3){removedNCREuv=removedNCREuv+1;}
@@ -507,7 +490,7 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISuv=removedNCDISuv+1;}
       if(Type[en]==6){removedCCCOuv=removedCCCOuv+1;}
       if(Type[en]==7){removedNCCOuv=removedNCCOuv+1;}}
-	}else {if(!Type.empty()){h_QNCUT->Fill(Qsq[en]);}}
+    }else {if(!Type.empty()){h_QNCUT->Fill(Qsq[en]);}}
     // Cut on U and Y planes
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){removeduy = removeduy + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQEuy=removedCCQEuy+1;}
@@ -518,8 +501,8 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISuy=removedNCDISuy+1;}
       if(Type[en]==6){removedCCCOuy=removedCCCOuy+1;}
       if(Type[en]==7){removedNCCOuy=removedNCCOuy+1;}}
-	}
-	// Cut on V and Y planes
+    }
+    // Cut on V and Y planes
     if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){removedvy = removedvy + 1;
       if(!Type.empty()){if(Type[en]==0){removedCCQEvy=removedCCQEvy+1;}
       if(Type[en]==1){removedNCQEvy=removedNCQEvy+1;}
@@ -529,7 +512,7 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       if(Type[en]==5){removedNCDISvy=removedNCDISvy+1;}
       if(Type[en]==6){removedCCCOvy=removedCCCOvy+1;}
       if(Type[en]==7){removedNCCOvy=removedNCCOvy+1;}}
-}
+    }
 
     _evtN += 1;
     return true;
@@ -611,11 +594,6 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
     myfile<<"Number of events removed using y and u info: "<<removeduy<<"% Total, "<<removedCCQEuy<<"/"<<CCQEno<<" CCQE, "<<removedNCQEuy<<"/"<<NCQEno<<" NCQE, "<<removedCCREuy<<"/"<<CCREno<<" CCRE, "<<removedNCREuy<<"/"<<NCREno<<" NCRE, "<<removedCCDISuy<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISuy<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOuy<<"/"<<CCCOno<<" CCCO, "<<removedNCCOuy<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
     myfile.close();
 
-    if(_fout){
-      _fout->cd();
-      std::cout << "writing ch tree" << std::endl;
-      _t_ch->Write();
-    }
     return true;
   }
 

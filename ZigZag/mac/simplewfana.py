@@ -3,11 +3,11 @@
 import sys,os
 
 if len(sys.argv) < 2:
-    msg  = '\n'
-    msg += "Usage 1: %s $INPUT_ROOT_FILE\n" % sys.argv[0]
-    msg += '\n'
-    sys.stderr.write(msg)
-    sys.exit(1)
+	msg  = '\n'
+	msg += "Usage 1: %s $INPUT_ROOT_FILE\n" % sys.argv[0]
+	msg += '\n'
+	sys.stderr.write(msg)
+	sys.exit(1)
 
 from ROOT import gSystem
 #gSystem.Load("libSimpleWFAna")
@@ -15,41 +15,41 @@ from ROOT import larlite as fmwk
 # Loop over different tolerances changing file names each time
 for x in range (0,6):
 	if x == 0:
-                T = 4
-                fname = "HitWire-nnbar4.root"
-                fname1 = "HitWire-numi4.root"
-                tname = "nnbar4.txt"
-                tname1 = "numi4.txt"
+		T = 4
+		fname = "HitWire-nnbar4.root"
+		fname1 = "HitWire-numi4.root"
+		tname = "nnbar4.txt"
+		tname1 = "numi4.txt"
 	if x == 1:
-                T = 6
-                fname = "HitWire-nnbar6.root"
-                fname1 = "HitWire-numi6.root"
-                tname = "nnbar6.txt"
-                tname1 = "numi6.txt"
+		T = 6
+		fname = "HitWire-nnbar6.root"
+		fname1 = "HitWire-numi6.root"
+		tname = "nnbar6.txt"
+		tname1 = "numi6.txt"
 	if x == 2:
-                T = 8
-                fname = "HitWire-nnbar8.root"
-                fname1 = "HitWire-numi8.root"
-                tname = "nnbar8.txt"
-                tname1 = "numi8.txt"
+		T = 8
+		fname = "HitWire-nnbar8.root"
+		fname1 = "HitWire-numi8.root"
+		tname = "nnbar8.txt"
+		tname1 = "numi8.txt"
 	if x == 3:
-                T = 10
-                fname = "HitWire-nnbar10.root"
-                fname1 = "HitWire-numi10.root"
-                tname = "nnbar10.txt"
-                tname1 = "numi10.txt"
+		T = 10
+		fname = "HitWire-nnbar10.root"
+		fname1 = "HitWire-numi10.root"
+		tname = "nnbar10.txt"
+		tname1 = "numi10.txt"
 	if x == 4:
-                T = 12
-                fname = "HitWire-nnbar12.root"
-                fname1 = "HitWire-numi12.root"
-                tname = "nnbar12.txt"
-                tname1 = "numi12.txt"
+		T = 12
+		fname = "HitWire-nnbar12.root"
+		fname1 = "HitWire-numi12.root"
+		tname = "nnbar12.txt"
+		tname1 = "numi12.txt"
 	if x == 5:
-                T = 14
-                fname = "HitWire-nnbar14.root"
-                fname1 = "HitWire-numi14.root"
-                tname = "nnbar14.txt"
-                tname1 = "numi14.txt"
+		T = 14
+		fname = "HitWire-nnbar14.root"
+		fname1 = "HitWire-numi14.root"
+		tname = "nnbar14.txt"
+		tname1 = "numi14.txt"
 	# Create ana_processor instance
 	my_proc = fmwk.ana_processor()
 	
@@ -59,11 +59,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	# Specify output root file name
-	my_proc.set_ana_output_file("SimpleWFAna_output.root");
-	
 	ana_unit = fmwk.SimpleWFAna(T,fname,tname)
-	#corr_unit.setVerbose(True)
 	
 	my_proc.add_process(ana_unit)
 	
@@ -88,36 +84,32 @@ for x in range (0,6):
 	print
 
 	# Create ana_processor instance
-        my_proc1 = fmwk.ana_processor()
+	my_proc1 = fmwk.ana_processor()
 
-        # add input files - numi truth file
-        my_proc1.add_input_file(sys.argv[2])
+	# add input files - numi truth file
+	my_proc1.add_input_file(sys.argv[2])
 
-        # Specify IO mode
-        my_proc1.set_io_mode(fmwk.storage_manager.kREAD)
+	# Specify IO mode
+	my_proc1.set_io_mode(fmwk.storage_manager.kREAD)
 
-        # Specify output root file name
-        my_proc1.set_ana_output_file("SimpleWFAna_output.root")
-
-        ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt")
-        #corr_unit.setVerbose(True)
+	ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt")
 
 	my_proc1.add_process(ana_unit1)
 
-        print
-        print  "Finished configuring ana_processor. Start event loop!"
-        print
+	print
+	print  "Finished configuring ana_processor. Start event loop!"
+	print
 
-        # Let's run it.
-        my_proc1.run()
+	# Let's run it.
+	my_proc1.run()
 	# Get interaction types
 	typ = ana_unit1.GetType()
 	# Get neutrino energies
 	qsq = ana_unit1.GetQsq()
-        # done!
-        print
-        print "Finished running ana_processor event loop!"
-        print
+	# done!
+	print
+	print "Finished running ana_processor event loop!"
+	print
 	
 	# Create ana_processor instance
 	my_proc2 = fmwk.ana_processor()
@@ -128,11 +120,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc2.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	# Specify output root file name
-	my_proc2.set_ana_output_file("SimpleWFAna_output.root");
-	
 	ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1)
-	#corr_unit.setVerbose(True)
 	
 	# Set cut limits, interaction types and neutrino energies
 	ana_unit2.SetTmin(t_min)
