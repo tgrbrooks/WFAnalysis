@@ -90,11 +90,11 @@ namespace larlite {
     int removedCCQE,removedNCQE,removedCCRE,removedNCRE,removedCCDIS,removedNCDIS,removedCCCO,removedNCCO;
     int CCQEno,CCREno,CCDISno,CCCOno,NCQEno,NCREno,NCDISno,NCCOno;
     // array of events
-    int eventNo[500];
+    std::vector<int> eventNo;
     // array of number of hits
-    double hitNo[500], uhitNo[500], vhitNo[500], yhitNo[500];
+    std::vector<double> hitNo, uhitNo, vhitNo, yhitNo;
     // array of standard deviations
-    double sDev[500], usDev[500], vsDev[500], ysDev[500];
+    std::vector<double> sDev, usDev, vsDev, ysDev;
     // vector of interaction types
     std::vector<int> Type;
     // vector of neutrino energies
@@ -105,7 +105,7 @@ namespace larlite {
     std::string nm;
     std::string fnm;
     // cut limits to be set
-    int Tmin, Tmax, Umin, Umax, Vmin, Vmax, Ymin, Ymax; 
+    double Tmin, Tmax, Umin, Umax, Vmin, Vmax, Ymin, Ymax; 
 
     // Vectors for TDC times of hits
     std::vector<int> TDCvec, UTDCvec, VTDCvec, YTDCvec;
@@ -114,10 +114,12 @@ namespace larlite {
 
     int truthflag;
 
+    int option;
+
   public:
 
     /// Default constructor
-    SimpleWFAna(double T,std::string name,std::string fname ) { _name="SimpleWFAna"; _fout=0 ; x=T;nm=name;fnm=fname; };
+    SimpleWFAna(double T,std::string name,std::string fname,int op ) { _name="SimpleWFAna"; _fout=0 ; x=T;nm=name;fnm=fname; option=op; };
 
     /// Default destructor
     virtual ~SimpleWFAna(){};
@@ -149,52 +151,52 @@ namespace larlite {
       return fnm;
     }
     // Accessor and mutator functions for cut values
-    int GetTmin() {
+    double GetTmin() {
       return Tmin;
     }
-    void SetTmin(int t_min) {
+    void SetTmin(double t_min) {
       Tmin = t_min;
     }
-    int GetTmax() {
+    double GetTmax() {
       return Tmax;
     }
-    void SetTmax(int t_max) {
+    void SetTmax(double t_max) {
       Tmax = t_max;
     }
-    int GetUmin() {
+    double GetUmin() {
       return Umin;
     }
-    void SetUmin(int u_min) {
+    void SetUmin(double u_min) {
       Umin = u_min;
     }
-    int GetUmax() {
+    double GetUmax() {
       return Umax;
     }
-    void SetUmax(int u_max) {
+    void SetUmax(double u_max) {
       Umax = u_max;
     }
-    int GetVmin() {
+    double GetVmin() {
       return Vmin;
     }
-    void SetVmin(int v_min) {
+    void SetVmin(double v_min) {
       Vmin = v_min;
     }
-    int GetVmax() {
+    double GetVmax() {
       return Vmax;
     }
-    void SetVmax(int v_max) {
+    void SetVmax(double v_max) {
       Vmax = v_max;
     }
-    int GetYmin() {
+    double GetYmin() {
       return Ymin;
     }
-    void SetYmin(int y_min) {
+    void SetYmin(double y_min) {
       Ymin = y_min;
     }
-    int GetYmax() {
+    double GetYmax() {
       return Ymax;
     }
-    void SetYmax(int y_max) {
+    void SetYmax(double y_max) {
       Ymax = y_max;
     }
     // Accessor and mutator function for interaction type

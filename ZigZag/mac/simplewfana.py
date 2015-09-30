@@ -12,6 +12,15 @@ if len(sys.argv) < 2:
 from ROOT import gSystem
 #gSystem.Load("libSimpleWFAna")
 from ROOT import larlite as fmwk
+
+print('Enter a cut (1=hit num, 2=TDC std, 3=ADC amp, 4=integrated WF, 5=TDC iqr):')
+while True:
+	try:
+		option = int(raw_input());
+		break
+	except(option not in [1,2,3,4,5]):
+		print('Must be an integer between 1 and 5')
+
 # Loop over different tolerances changing file names each time
 for x in range (0,6):
 	if x == 0:
@@ -50,6 +59,7 @@ for x in range (0,6):
 		fname1 = "HitWire-numi14.root"
 		tname = "nnbar14.txt"
 		tname1 = "numi14.txt"
+
 	# Create ana_processor instance
 	my_proc = fmwk.ana_processor()
 	
@@ -59,7 +69,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	ana_unit = fmwk.SimpleWFAna(T,fname,tname)
+	ana_unit = fmwk.SimpleWFAna(T,fname,tname,option)
 	
 	my_proc.add_process(ana_unit)
 	
@@ -92,7 +102,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc1.set_io_mode(fmwk.storage_manager.kREAD)
 
-	ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt")
+	ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt",option)
 
 	my_proc1.add_process(ana_unit1)
 
@@ -120,7 +130,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc2.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1)
+	ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1,option)
 	
 	# Set cut limits, interaction types and neutrino energies
 	ana_unit2.SetTmin(t_min)
