@@ -56,7 +56,7 @@ namespace larlite {
     TH1D  *h_QCUT;
     TH1D  *h_QNCUT;
 
-  protected:   
+  protected: //Pretty sure this doesn't need to be protected
 
     float _mean;
 
@@ -72,23 +72,22 @@ namespace larlite {
     int _isHit, uHit ,vHit, yHit;
     // integrated ADC waveforms
     double intADC,UintADC,VintADC,YintADC;
-    // TDC ranges
-    int rangeTDC, urangeTDC, vrangeTDC, yrangeTDC;
 
     // wire number
     int wire;
     // event number
     int event;
+
     // number of removed events
-    int removed;
-    int removedu,removedCCQEu,removedNCQEu,removedCCREu,removedNCREu,removedCCDISu,removedNCDISu,removedCCCOu,removedNCCOu;
-    int removedv,removedCCQEv,removedNCQEv,removedCCREv,removedNCREv,removedCCDISv,removedNCDISv,removedCCCOv,removedNCCOv;
-    int removedy,removedCCQEy,removedNCQEy,removedCCREy,removedNCREy,removedCCDISy,removedNCDISy,removedCCCOy,removedNCCOy;
-    int removeduv,removedCCQEuv,removedNCQEuv,removedCCREuv,removedNCREuv,removedCCDISuv,removedNCDISuv,removedCCCOuv,removedNCCOuv;
-    int removeduy,removedCCQEuy,removedNCQEuy,removedCCREuy,removedNCREuy,removedCCDISuy,removedNCDISuy,removedCCCOuy,removedNCCOuy;
-    int removedvy,removedCCQEvy,removedNCQEvy,removedCCREvy,removedNCREvy,removedCCDISvy,removedNCDISvy,removedCCCOvy,removedNCCOvy;
-    int removedCCQE,removedNCQE,removedCCRE,removedNCRE,removedCCDIS,removedNCDIS,removedCCCO,removedNCCO;
-    int CCQEno,CCREno,CCDISno,CCCOno,NCQEno,NCREno,NCDISno,NCCOno;
+    std::vector <int> Removedu;
+    std::vector <int> Removedv;
+    std::vector <int> Removedy;
+    std::vector <int> Removeduv;
+    std::vector <int> Removeduy;
+    std::vector <int> Removedvy; 
+    std::vector <int> RemovedType;
+    std::vector <int> NeutrinoTypeNo;     
+    
     // array of events
     std::vector<int> eventNo;
     // array of number of hits
@@ -100,7 +99,7 @@ namespace larlite {
     // vector of neutrino energies
     std::vector<double> Qsq;
 
-    double x;
+    double Tolerance;
     // file names for use in simplewfana.py
     std::string nm;
     std::string fnm;
@@ -119,7 +118,7 @@ namespace larlite {
   public:
 
     /// Default constructor
-    SimpleWFAna(double T,std::string name,std::string fname,int op ) { _name="SimpleWFAna"; _fout=0 ; x=T;nm=name;fnm=fname; option=op; };
+    SimpleWFAna(double T,std::string name,std::string fname,int op ) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op; };
 
     /// Default destructor
     virtual ~SimpleWFAna(){};
@@ -141,7 +140,7 @@ namespace larlite {
 
     // Accessor function for tolerance
     double GetT() {
-      return x;
+      return Tolerance;
     }
     // Accessor functions for file names
     std::string GetName() {

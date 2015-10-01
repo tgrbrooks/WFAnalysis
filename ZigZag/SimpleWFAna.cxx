@@ -12,11 +12,10 @@ void drawWF( const std::vector<short int> ad, int size, double offset ) {
     // Variables to draw on graph
     size = 300;
     double x[size], y[size];
-    int n = size;
     // Fill variables with digital wavform information
     // x in units of ticks = 0.5us, y in units of ADCs
     // To just draw part change size and l's on RHS of = to start point
-    for(int l=0;l<n;l++) {
+    for(int l=0;l<size;l++) {
         x[l] = l+3500;
         y[l] = ad[l+3500]-offset;
     }
@@ -45,7 +44,7 @@ int hitCount(const std::vector<short int> adcs, double T, double offset) {
     while(flag == 0 && l<adcs.size()){
         double x = adcs[l];
         if((x-offset)>T||(x-offset)<-T){
-            hit = hit + 1;
+            hit ++;
             flag = 1;
         }
         l++;
@@ -62,7 +61,7 @@ int hitPerWire(const std::vector<short int> adcs, double T, double offset) {
         double x = adcs[l];
         if((x-offset)>T||(x-offset)<-T){
             // add one to hit counter
-            hit = hit + 1;
+            hit ++;
             // skip ahead by 150 TDCs
             l = l + 150;
         }
@@ -97,7 +96,7 @@ std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double o
     double max = 0;
     // Determine if wire is hit or not
     while(l<adcs.size()){
-        double y =pow(pow(adcs[l]-offset,2),0.5);
+	double y =pow(pow(adcs[l]-offset,2),0.5);
         if((y)>T){
             // If threshold is passed set max as this point
             max = y;
@@ -117,34 +116,40 @@ std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double o
     return v_ADCamp;
 }
 
-// Function to return average
-double wireAve(std::vector<double> hitNo) {
-    // Calculate average - doesn't have to be hits
-    double avHN = 0;
-    for(int j=0; j<100; ++j)
-    avHN += hitNo[j];
-    avHN /= (100);
-    return avHN;
-}
-
+// THIS IS NOT GENERALISABLE. NEED TO MERGE WITH TDCstd.
 // Function to return standard error
-double wireStd(std::vector<double> hitNo, double avHN) {
+
+double WireSTD(std::vector<double> hitNo, double avHN) {
     // Calculate standard error on the mean in number of hits
     double stDev = 0;
     for(int k=0; k<100; ++k)
-      stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
+    stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
     stDev = sqrt( stDev /(100*99));
     return stDev;
+}
+
+// calculate standard deviation of amplitude
+
+double ampStd(std::vector<double> ADCvec,double meanADC) {
+    // calculate standard deviation
+    double stdADC(0);
+    for(size_t k=0; k<ADCvec.size(); ++k)
+      stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
+    stdADC = sqrt( stdADC / ((double)ADCvec.size()));
+    return stdADC;
 }
 
 // Function to return standard deviation of TDC
 float TDCstd(std::vector<int> TDCvec) {
     // Calculate mean
-    float meanTDC(0), stdTDC(0);
-    for (size_t f=0; f<TDCvec.size(); ++f) {
-        meanTDC += TDCvec[f];
+    float stdTDC(0);
+    float meanTDC(0);
+
+    for(size_t f=0; f<TDCvec.size(); ++f) {
+        meanTDC += ((float)TDCvec[f]);
     }
     meanTDC /= ((float)TDCvec.size());
+
     // Calculate standard deviation
     for(size_t k=0; k<TDCvec.size(); ++k)
       stdTDC += (TDCvec[k]-meanTDC)*(TDCvec[k]-meanTDC);
@@ -157,11 +162,10 @@ int TDCiqr(std::vector<int> TDCvec, int hitNo) {
     // order TDC's by value
     std::sort(TDCvec.begin(),TDCvec.end());
     int quart =(int) hitNo/4;
-    int TDCq1 = TDCvec[quart];
-    int TDCq3 = TDCvec[3*quart];
-    int iqrTDC = TDCq3 - TDCq1;
+    int iqrTDC = (TDCvec[3*quart] - TDCvec[quart]);
     return iqrTDC;
 }
+
 // calculate mean ADC amplitude
 double ampMean(std::vector<double> ADCvec) {
     // calculate mean
@@ -172,15 +176,6 @@ double ampMean(std::vector<double> ADCvec) {
     meanADC /= ((double)ADCvec.size());
     return meanADC;
 }
-// calculate standard deviation of amplitude
-double ampStd(std::vector<double> ADCvec,double meanADC) {
-    // calculate standard deviation
-    double stdADC(0);
-    for(size_t k=0; k<ADCvec.size(); ++k)
-      stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
-    stdADC = sqrt( stdADC / ((double)ADCvec.size()));
-    return stdADC;
-}
 
 // ---- MEMBER FUNCTIONS ---- //
 
@@ -190,30 +185,29 @@ bool SimpleWFAna::initialize() {
     // Set event number to 0
     _evtN = 0;
 
-// ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
+    // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
     /*// Ask for event and wire number to display graph of digital waveform
     std::cout<<"Enter Event Number: ";
     std::cin>>event;std::cout<<std::endl;
     std::cout<<"Enter Wire Number: ";
     std::cin>>wire;std::cout<<std::endl;*/
+    
+    for(int i(0); i < 9; i++){
+        Removedu.push_back(0); // Try using Removedu(9,0) instead?
+        Removedv.push_back(0);
+        Removedy.push_back(0);
+        Removeduv.push_back(0);
+        Removeduy.push_back(0);
+        Removedvy.push_back(0);
+        RemovedType.push_back(0);
+        if(i > 1) NeutrinoTypeNo.push_back(0);
+    }
 
     // Set counter of removed events to zero
-    removed = 0;removedCCQE=0;removedNCQE=0;removedCCRE=0;removedNCRE=0;removedCCDIS=0;removedNCDIS=0;removedCCCO=0;removedNCCO=0;
-    removedu = 0;removedCCQEu=0;removedNCQEu=0;removedCCREu=0;removedNCREu=0;removedCCDISu=0;removedNCDISu=0;removedCCCOu=0;removedNCCOu=0;
-    removedv = 0;removedCCQEv=0;removedNCQEv=0;removedCCREv=0;removedNCREv=0;removedCCDISv=0;removedNCDISv=0;removedCCCOv=0;removedNCCOv=0;
-    removedy = 0;removedCCQEy=0;removedNCQEy=0;removedCCREy=0;removedNCREy=0;removedCCDISy=0;removedNCDISy=0;removedCCCOy=0;removedNCCOy=0;
-    removeduv = 0;removedCCQEuv=0;removedNCQEuv=0;removedCCREuv=0;removedNCREuv=0;removedCCDISuv=0;removedNCDISuv=0;removedCCCOuv=0;removedNCCOuv=0;
-    removedvy = 0;removedCCQEvy=0;removedNCQEvy=0;removedCCREvy=0;removedNCREvy=0;removedCCDISvy=0;removedNCDISvy=0;removedCCCOvy=0;removedNCCOvy=0;
-    removeduy = 0;removedCCQEuy=0;removedNCQEuy=0;removedCCREuy=0;removedNCREuy=0;removedCCDISuy=0;removedNCDISuy=0;removedCCCOuy=0;removedNCCOuy=0;
+
     // Set event type counters to zero - only used for last file
-    CCQEno = 0;
-    NCQEno = 0;
-    CCREno = 0;
-    NCREno = 0;
-    CCDISno = 0;
-    NCDISno = 0;
-    CCCOno = 0;
-    NCCOno = 0;
+    // NeutrinoTypeNo(8,0); // Neutrino Types CCQE, NCQE, CCRE, NCRE, CCDIS, NCDIS, CCCO and NCCO in that order.
+
     // Book histograms
     h_HITS = new TH1I("h_HITS","",60,0,800000);
     h_UHITS = new TH1I("h_UHITS","",45,0,300000);
@@ -227,14 +221,9 @@ bool SimpleWFAna::initialize() {
     // Count event types
     if(!Type.empty()){
         for(int i=0;i<100;i++){
-            if(Type[i]==0){CCQEno=CCQEno+1;}
-            if(Type[i]==1){NCQEno=NCQEno+1;}
-            if(Type[i]==2){CCREno=CCREno+1;}
-            if(Type[i]==3){NCREno=NCREno+1;}
-            if(Type[i]==4){CCDISno=CCDISno+1;}
-            if(Type[i]==5){NCDISno=NCDISno+1;}
-            if(Type[i]==6){CCCOno=CCCOno+1;}
-            if(Type[i]==7){NCCOno=NCCOno+1;}
+            for(int j=0;j<8;j++){
+                if(Type[i]==j) NeutrinoTypeNo[j] ++; // Loop over all neutrino types. See vector initialisation above.
+            }
 	}
     }
     return true;
@@ -491,82 +480,73 @@ bool SimpleWFAna::initialize() {
 
     // Count number of removed events outside of some tolerance of hit wires
     // Total cut
-    if(hitNo[en]>Tmax||hitNo[en]<Tmin){removed = removed + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQE=removedCCQE+1;}
-      if(Type[en]==1){removedNCQE=removedNCQE+1;}
-      if(Type[en]==2){removedCCRE=removedCCRE+1;}
-      if(Type[en]==3){removedNCRE=removedNCRE+1;}
-      if(Type[en]==4){removedCCDIS=removedCCDIS+1;}
-      if(Type[en]==5){removedNCDIS=removedNCDIS+1;}
-      if(Type[en]==6){removedCCCO=removedCCCO+1;}
-      if(Type[en]==7){removedNCCO=removedNCCO+1;}}
+    if(hitNo[en]>Tmax||hitNo[en]<Tmin){
+      RemovedType[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j < 8; j ++){
+          if(Type[en]==j){ RemovedType[j+1] ++;}
+        }
+      }
     }
+
     // Cut on U plane
-    if(uhitNo[en]>Umax||uhitNo[en]<Umin){removedu = removedu + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQEu=removedCCQEu+1;}
-      if(Type[en]==1){removedNCQEu=removedNCQEu+1;}
-      if(Type[en]==2){removedCCREu=removedCCREu+1;}
-      if(Type[en]==3){removedNCREu=removedNCREu+1;}
-      if(Type[en]==4){removedCCDISu=removedCCDISu+1;}
-      if(Type[en]==5){removedNCDISu=removedNCDISu+1;}
-      if(Type[en]==6){removedCCCOu=removedCCCOu+1;}
-      if(Type[en]==7){removedNCCOu=removedNCCOu+1;}}
+    if(uhitNo[en]>Umax||uhitNo[en]<Umin){
+      Removedu[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){Removedu[j+1] ++;}
+        }
+      }
     }
+
     // Cut on V plane
-    if(vhitNo[en]>Vmax||vhitNo[en]<Vmin){removedv = removedv + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQEv=removedCCQEv+1;}
-      if(Type[en]==1){removedNCQEv=removedNCQEv+1;}
-      if(Type[en]==2){removedCCREv=removedCCREv+1;}
-      if(Type[en]==3){removedNCREv=removedNCREv+1;}
-      if(Type[en]==4){removedCCDISv=removedCCDISv+1;}
-      if(Type[en]==5){removedNCDISv=removedNCDISv+1;}
-      if(Type[en]==6){removedCCCOv=removedCCCOv+1;}
-      if(Type[en]==7){removedNCCOv=removedNCCOv+1;}}
+    if(vhitNo[en]>Vmax||vhitNo[en]<Vmin){
+      Removedv[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){Removedv[j+1] ++;}      
+        }
+      }
     }
+
     // Cut on Y plane
-    if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){removedy = removedy + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQEy=removedCCQEy+1;}
-      if(Type[en]==1){removedNCQEy=removedNCQEy+1;}
-      if(Type[en]==2){removedCCREy=removedCCREy+1;}
-      if(Type[en]==3){removedNCREy=removedNCREy+1;}
-      if(Type[en]==4){removedCCDISy=removedCCDISy+1;}
-      if(Type[en]==5){removedNCDISy=removedNCDISy+1;}
-      if(Type[en]==6){removedCCCOy=removedCCCOy+1;}
-      if(Type[en]==7){removedNCCOy=removedNCCOy+1;}}
+    if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){
+      Removedy[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j<8;j++){
+          if(Type[en]==j){Removedy[j+1] ++;}
+        }
+      }
     }
+
     // Cut on U and V planes also fill cutting histograms
-    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){removeduv = removeduv + 1;
-      if(!Type.empty()){h_QCUT->Fill(Qsq[en]); 
-          if(Type[en]==0){removedCCQEuv=removedCCQEuv+1;}
-      if(Type[en]==1){removedNCQEuv=removedNCQEuv+1;}
-      if(Type[en]==2){removedCCREuv=removedCCREuv+1;}
-      if(Type[en]==3){removedNCREuv=removedNCREuv+1;}
-      if(Type[en]==4){removedCCDISuv=removedCCDISuv+1;}
-      if(Type[en]==5){removedNCDISuv=removedNCDISuv+1;}
-      if(Type[en]==6){removedCCCOuv=removedCCCOuv+1;}
-      if(Type[en]==7){removedNCCOuv=removedNCCOuv+1;}}
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+      Removeduv[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j<8;j++){
+          if(Type[en]==j){Removeduv[j+1] ++;}
+        }
+      }
     }else {if(!Type.empty()){h_QNCUT->Fill(Qsq[en]);}}
+
     // Cut on U and Y planes
-    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){removeduy = removeduy + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQEuy=removedCCQEuy+1;}
-      if(Type[en]==1){removedNCQEuy=removedNCQEuy+1;}
-      if(Type[en]==2){removedCCREuy=removedCCREuy+1;}
-      if(Type[en]==3){removedNCREuy=removedNCREuy+1;}
-      if(Type[en]==4){removedCCDISuy=removedCCDISuy+1;}
-      if(Type[en]==5){removedNCDISuy=removedNCDISuy+1;}
-      if(Type[en]==6){removedCCCOuy=removedCCCOuy+1;}
-      if(Type[en]==7){removedNCCOuy=removedNCCOuy+1;}}
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){
+      Removeduy[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j<8;j++){
+          if(Type[en]==j){Removeduy[j+1] ++;}
+        }
+      } 
     }
+
     // Cut on V and Y planes
-    if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){removedvy = removedvy + 1;
-      if(!Type.empty()){if(Type[en]==0){removedCCQEvy=removedCCQEvy+1;}
-      if(Type[en]==1){removedNCQEvy=removedNCQEvy+1;}
-      if(Type[en]==2){removedCCREvy=removedCCREvy+1;}
-      if(Type[en]==3){removedNCREvy=removedNCREvy+1;}
-      if(Type[en]==4){removedCCDISvy=removedCCDISvy+1;}
-      if(Type[en]==5){removedNCDISvy=removedNCDISvy+1;}
-      if(Type[en]==6){removedCCCOvy=removedCCCOvy+1;}
-      if(Type[en]==7){removedNCCOvy=removedNCCOvy+1;}}
+    if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+      Removedvy[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j<8;j++){
+          if(Type[en]==j){Removedvy[j+1] ++;}
+        }
+      }   
     }
 
     _evtN += 1;
@@ -597,7 +577,7 @@ bool SimpleWFAna::initialize() {
     Vmax = vhitNo[0];
     Ymin = yhitNo[0];
     Ymax = yhitNo[0];
-    for(int k=0; k<100; ++k){
+    for(unsigned int k=0; k<hitNo.size(); ++k){
       if(hitNo[k]<Tmin){Tmin = hitNo[k];}
       if(hitNo[k]>Tmax){Tmax = hitNo[k];}
       if(uhitNo[k]<Umin){Umin = uhitNo[k];}
@@ -634,21 +614,21 @@ bool SimpleWFAna::initialize() {
     outfile->Close();
 
     // Calculate averages and standard deviations
-    double avHN = wireAve(hitNo);
-    double stDev = wireStd(hitNo, avHN);
-    double avHNu = wireAve(uhitNo);
-    double stDevu = wireStd(uhitNo, avHNu);
-    double avHNv = wireAve(vhitNo);
-    double stDevv = wireStd(vhitNo, avHNv);
-    double avHNy = wireAve(yhitNo);
-    double stDevy = wireStd(yhitNo, avHNy);
+    double avHN = ampMean(hitNo);
+    double stDev = WireSTD(hitNo,avHN);
+    double avHNu = ampMean(uhitNo);
+    double stDevu = WireSTD(uhitNo,avHNu);
+    double avHNv = ampMean(vhitNo);
+    double stDevv = WireSTD(vhitNo,avHNv);
+    double avHNy = ampMean(yhitNo);
+    double stDevy = WireSTD(yhitNo,avHNy);
 
 // ****** UNCOMMENT FOR AVERAGE ADC AMPLITUDE STANDARD DEVIATIONS ****** //
     /*// CALCULATE AVERAGE STANDARD DEVIATIONS
-    double avSDev = wireAve(sDev);
-    double avSDevu = wireAve(usDev);
-    double avSDevv = wireAve(vsDev);
-    double avSDevy = wireAve(ysDev);*/
+    double avSDev = ampMean(sDev);
+    double avSDevu = ampMean(usDev);
+    double avSDevv = ampMean(vsDev);
+    double avSDevy = ampMean(ysDev);*/
 
     // Write results to a .txt file
     std::ofstream myfile;
@@ -661,17 +641,56 @@ bool SimpleWFAna::initialize() {
   //  myfile<<"The average V ADC standard deviation was: "<<avSDevv<<std::endl;
     myfile<<"The average mean Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
   //  myfile<<"The average Y ADC standard deviation was: "<<avSDevy<<std::endl;
-    myfile<<"Total number of events removed: "<<removed<<"% Total, "<<removedCCQE<<"/"<<CCQEno<<" CCQE, "<<removedNCQE<<"/"<<NCQEno<<" NCQE, "<<removedCCRE<<"/"<<CCREno<<" CCRE, "<<removedNCRE<<"/"<<NCREno<<" NCRE, "<<removedCCDIS<<"/"<<CCDISno<<" CCDIS, "<<removedNCDIS<<"/"<<NCDISno<<" NCDIS, "<<removedCCCO<<"/"<<CCCOno<<" CCCO, "<<removedNCCO<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using u info: "<<removedu<<"% Total, "<<removedCCQEu<<"/"<<CCQEno<<" CCQE, "<<removedNCQEu<<"/"<<NCQEno<<" NCQE, "<<removedCCREu<<"/"<<CCREno<<" CCRE, "<<removedNCREu<<"/"<<NCREno<<" NCRE, "<<removedCCDISu<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISu<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOu<<"/"<<CCCOno<<" CCCO, "<<removedNCCOu<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using v info: "<<removedv<<"% Total, "<<removedCCQEv<<"/"<<CCQEno<<" CCQE, "<<removedNCQEv<<"/"<<NCQEno<<" NCQE, "<<removedCCREv<<"/"<<CCREno<<" CCRE, "<<removedNCREv<<"/"<<NCREno<<" NCRE, "<<removedCCDISv<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISv<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOv<<"/"<<CCCOno<<" CCCO, "<<removedNCCOv<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using y info: "<<removedy<<"% Total, "<<removedCCQEy<<"/"<<CCQEno<<" CCQE, "<<removedNCQEy<<"/"<<NCQEno<<" NCQE, "<<removedCCREy<<"/"<<CCREno<<" CCRE, "<<removedNCREy<<"/"<<NCREno<<" NCRE, "<<removedCCDISy<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISy<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOy<<"/"<<CCCOno<<" CCCO, "<<removedNCCOy<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using u and v info: "<<removeduv<<"% Total, "<<removedCCQEuv<<"/"<<CCQEno<<" CCQE, "<<removedNCQEuv<<"/"<<NCQEno<<" NCQE, "<<removedCCREuv<<"/"<<CCREno<<" CCRE, "<<removedNCREuv<<"/"<<NCREno<<" NCRE, "<<removedCCDISuv<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISuv<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOuv<<"/"<<CCCOno<<" CCCO, "<<removedNCCOuv<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using v and y info: "<<removedvy<<"% Total, "<<removedCCQEvy<<"/"<<CCQEno<<" CCQE, "<<removedNCQEvy<<"/"<<NCQEno<<" NCQE, "<<removedCCREvy<<"/"<<CCREno<<" CCRE, "<<removedNCREvy<<"/"<<NCREno<<" NCRE, "<<removedCCDISvy<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISvy<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOvy<<"/"<<CCCOno<<" CCCO, "<<removedNCCOvy<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
-    myfile<<"Number of events removed using y and u info: "<<removeduy<<"% Total, "<<removedCCQEuy<<"/"<<CCQEno<<" CCQE, "<<removedNCQEuy<<"/"<<NCQEno<<" NCQE, "<<removedCCREuy<<"/"<<CCREno<<" CCRE, "<<removedNCREuy<<"/"<<NCREno<<" NCRE, "<<removedCCDISuy<<"/"<<CCDISno<<" CCDIS, "<<removedNCDISuy<<"/"<<NCDISno<<" NCDIS, "<<removedCCCOuy<<"/"<<CCCOno<<" CCCO, "<<removedNCCOuy<<"/"<<NCCOno<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Total number of events removed: "
+<<RemovedType[0]<<"% Total, "<<RemovedType[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "
+<<RemovedType[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "<<RemovedType[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "
+<<RemovedType[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "<<RemovedType[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "
+<<RemovedType[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "<<RemovedType[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "
+<<RemovedType[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using u info: "<<Removedu[0]<<"% Total, "
+<<Removedu[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedu[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removedu[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedu[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removedu[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedu[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removedu[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedu[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using v info: "<<Removedv[0]<<"% Total, "
+<<Removedv[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedv[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removedv[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedv[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removedv[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedv[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removedv[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedv[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using y info: "<<Removedy[0]<<"% Total, "
+<<Removedy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removedy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removedy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removedy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using u and v info: "<<Removeduv[0]<<"% Total, "
+<<Removeduv[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removeduv[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removeduv[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removeduv[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removeduv[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removeduv[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removeduv[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removeduv[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using v and y info: "<<Removedvy[0]<<"% Total, "
+<<Removedvy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedvy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removedvy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedvy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removedvy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedvy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removedvy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedvy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
+    myfile<<"Number of events removed using y and u info: "<<Removeduy[0]<<"% Total, "
+<<Removeduy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removeduy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
+<<Removeduy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removeduy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
+<<Removeduy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removeduy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
+<<Removeduy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removeduy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+
     myfile.close();
 
-    eventNo.clear();
-    hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
+    eventNo.clear(); hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
+    NeutrinoTypeNo.clear(); Removedu.clear(); Removedv.clear(); Removedy.clear(); 
+    Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); RemovedType.clear();
+
     //sDev.clear(), usDev.clear(), vsDev.clear(), ysDev.clear();
 
     return true;
