@@ -23,7 +23,7 @@ while True:
 
 # Loop over different tolerances changing file names each time
 for x in range (0,6):
-	if x == 0:
+	if x == 3:
 		T = 4
 		fname = "HitWire-nnbar4.root"
 		fname1 = "HitWire-numi4.root"
@@ -41,7 +41,7 @@ for x in range (0,6):
 		fname1 = "HitWire-numi8.root"
 		tname = "nnbar8.txt"
 		tname1 = "numi8.txt"
-	if x == 3:
+	if x == 0:
 		T = 10
 		fname = "HitWire-nnbar10.root"
 		fname1 = "HitWire-numi10.root"

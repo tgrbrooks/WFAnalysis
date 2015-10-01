@@ -56,7 +56,7 @@ namespace larlite {
     TH1D  *h_QCUT;
     TH1D  *h_QNCUT;
 
-  // protected: Pretty sure this doesn't need to be protected
+  protected: //Pretty sure this doesn't need to be protected
 
     float _mean;
 

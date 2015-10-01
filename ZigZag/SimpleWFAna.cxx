@@ -24,7 +24,7 @@ void drawWF( const std::vector<short int> ad, int size, double offset ) {
     TGraph *gr = new TGraph(size,x,y);
     gr->SetLineWidth(1);
     gr->SetLineColorAlpha(kBlue,1);
-    gr->SetMarkerStyle(1;
+    gr->SetMarkerStyle(1);
     gr->SetMarkerSize(1);
     gr->GetXaxis()->SetTitle("Ticks /0.5us");
     gr->GetYaxis()->SetTitle("ADCs");
@@ -118,18 +118,18 @@ std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double o
 
 // THIS IS NOT GENERALISABLE. NEED TO MERGE WITH TDCstd.
 // Function to return standard error
-/*
-double wireStd(std::vector<double> hitNo, double avHN) {
+
+double WireSTD(std::vector<double> hitNo, double avHN) {
     // Calculate standard error on the mean in number of hits
     double stDev = 0;
     for(int k=0; k<100; ++k)
     stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
     stDev = sqrt( stDev /(100*99));
     return stDev;
-}*/
+}
 
 // calculate standard deviation of amplitude
-/*
+
 double ampStd(std::vector<double> ADCvec,double meanADC) {
     // calculate standard deviation
     double stdADC(0);
@@ -137,13 +137,19 @@ double ampStd(std::vector<double> ADCvec,double meanADC) {
       stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
     stdADC = sqrt( stdADC / ((double)ADCvec.size()));
     return stdADC;
-}*/
+}
 
 // Function to return standard deviation of TDC
 float TDCstd(std::vector<int> TDCvec) {
     // Calculate mean
     float stdTDC(0);
-    float meanTDC = ((float)ampMean(TDCvec));
+    float meanTDC(0);
+
+    for(size_t f=0; f<TDCvec.size(); ++f) {
+        meanTDC += ((float)TDCvec[f]);
+    }
+    meanTDC /= ((float)TDCvec.size());
+
     // Calculate standard deviation
     for(size_t k=0; k<TDCvec.size(); ++k)
       stdTDC += (TDCvec[k]-meanTDC)*(TDCvec[k]-meanTDC);
@@ -186,7 +192,7 @@ bool SimpleWFAna::initialize() {
     std::cout<<"Enter Wire Number: ";
     std::cin>>wire;std::cout<<std::endl;*/
     
-    for(int i; i < 9; i++){
+    for(int i(0); i < 9; i++){
         Removedu.push_back(0); // Try using Removedu(9,0) instead?
         Removedv.push_back(0);
         Removedy.push_back(0);
@@ -194,12 +200,13 @@ bool SimpleWFAna::initialize() {
         Removeduy.push_back(0);
         Removedvy.push_back(0);
         RemovedType.push_back(0);
+        if(i > 1) NeutrinoTypeNo.push_back(0);
     }
 
     // Set counter of removed events to zero
 
     // Set event type counters to zero - only used for last file
-    NeutrinoTypeNo(8,0); // Neutrino Types CCQE, NCQE, CCRE, NCRE, CCDIS, NCDIS, CCCO and NCCO in that order.
+    // NeutrinoTypeNo(8,0); // Neutrino Types CCQE, NCQE, CCRE, NCRE, CCDIS, NCDIS, CCCO and NCCO in that order.
 
     // Book histograms
     h_HITS = new TH1I("h_HITS","",60,0,800000);
@@ -393,11 +400,10 @@ bool SimpleWFAna::initialize() {
 // ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
     if(option==3){
     // Calculate mean and standard deviation of amplitudes
-    // if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = Ampstd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;} OLD EXAMPLE
-    if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = TDCstd(ADCvec);}else{MampADC=0;SDampADC=0;}
-    if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = TDCstd(UADCvec);}else{UMampADC=0;USDampADC=0;}
-    if(vHit!=0){VMampADC = ampMean(VADCvec);VSDampADC = TDCstd(VADCvec);}else{VMampADC=0;VSDampADC=0;}
-    if(yHit!=0){YMampADC = ampMean(YADCvec);YSDampADC = TDCstd(YADCvec);}else{YMampADC=0;YSDampADC=0;}}
+    if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
+    if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = ampStd(UADCvec,UMampADC);}else{UMampADC=0;USDampADC=0;}
+    if(vHit!=0){VMampADC = ampMean(VADCvec);VSDampADC = ampStd(VADCvec,VMampADC);}else{VMampADC=0;VSDampADC=0;}
+    if(yHit!=0){YMampADC = ampMean(YADCvec);YSDampADC = ampStd(YADCvec,YMampADC);}else{YMampADC=0;YSDampADC=0;}}
 
     // Fill arrays of doubles with event number
     int en = _evtN;
@@ -505,7 +511,7 @@ bool SimpleWFAna::initialize() {
 
     // Cut on Y plane
     if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){
-      Removedy[0] = ++;
+      Removedy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
           if(Type[en]==j){Removedy[j+1] ++;}
@@ -515,7 +521,7 @@ bool SimpleWFAna::initialize() {
 
     // Cut on U and V planes also fill cutting histograms
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
-      Removeduv[0] = ++;
+      Removeduv[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
           if(Type[en]==j){Removeduv[j+1] ++;}
@@ -525,7 +531,7 @@ bool SimpleWFAna::initialize() {
 
     // Cut on U and Y planes
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){
-      Removeduy[0] = ++;
+      Removeduy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
           if(Type[en]==j){Removeduy[j+1] ++;}
@@ -535,7 +541,7 @@ bool SimpleWFAna::initialize() {
 
     // Cut on V and Y planes
     if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
-      Removedvy[0] = ++;
+      Removedvy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
           if(Type[en]==j){Removedvy[j+1] ++;}
@@ -571,7 +577,7 @@ bool SimpleWFAna::initialize() {
     Vmax = vhitNo[0];
     Ymin = yhitNo[0];
     Ymax = yhitNo[0];
-    for(int k=0; k<hitNo.size(); ++k){
+    for(unsigned int k=0; k<hitNo.size(); ++k){
       if(hitNo[k]<Tmin){Tmin = hitNo[k];}
       if(hitNo[k]>Tmax){Tmax = hitNo[k];}
       if(uhitNo[k]<Umin){Umin = uhitNo[k];}
@@ -609,13 +615,13 @@ bool SimpleWFAna::initialize() {
 
     // Calculate averages and standard deviations
     double avHN = ampMean(hitNo);
-    double stDev = TDCstd(hitNo, avHN); // Changed from WireSTD
+    double stDev = WireSTD(hitNo,avHN);
     double avHNu = ampMean(uhitNo);
-    double stDevu = TDCstd(uhitNo, avHNu); // Changed from WireSTD
+    double stDevu = WireSTD(uhitNo,avHNu);
     double avHNv = ampMean(vhitNo);
-    double stDevv = TDCstd(vhitNo, avHNv); // Changed from WireSTD
+    double stDevv = WireSTD(vhitNo,avHNv);
     double avHNy = ampMean(yhitNo);
-    double stDevy = TDCstd(yhitNo, avHNy); // Changed from WireSTD
+    double stDevy = WireSTD(yhitNo,avHNy);
 
 // ****** UNCOMMENT FOR AVERAGE ADC AMPLITUDE STANDARD DEVIATIONS ****** //
     /*// CALCULATE AVERAGE STANDARD DEVIATIONS
