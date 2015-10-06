@@ -52,6 +52,8 @@ namespace larlite {
     TH1I  *h_VHITS;
     TH1I  *h_YHITS;
     TH2I  *h_UVHITS;
+    TH2I  *h_UYHITS;
+    TH2I  *h_VYHITS;
     TH1I  *h_HITvAMP;
     TH1D  *h_QCUT;
     TH1D  *h_QNCUT;

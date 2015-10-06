@@ -215,13 +215,22 @@ bool SimpleWFAna::initialize() {
         if(i > 0) NeutrinoTypeNo.push_back(0);
     }
 
+    // REMEMBER TO TEST AND CHANGE THESE LIMITS WHENEVER NEW DATA IS USED
+    int tnbins=0; int unbins=0;int vnbins=0;int ynbins=0;int tmax=0;int umax=0;int vmax=0;int ymax=0;
+    if(option==1){tnbins=70;unbins=40;vnbins=40;ynbins=60;tmax=7000;umax=2000;vmax=2000;ymax=3000;}
+    if(option==2){tnbins=70;unbins=40;vnbins=40;ynbins=60;tmax=7000;umax=2000;vmax=2000;ymax=3000;}
+    if(option==3){tnbins=60;unbins=60;vnbins=60;ynbins=60;tmax=120;umax=120;vmax=120;ymax=120;}
+    if(option==4){tnbins=60;unbins=45;vnbins=45;ynbins=60;tmax=800000;umax=300000;vmax=300000;ymax=400000;}
+    if(option==5){tnbins=70;unbins=40;vnbins=40;ynbins=60;tmax=7000;umax=2000;vmax=2000;ymax=3000;}
 
     // Book histograms
-    h_HITS = new TH1I("h_HITS","",60,0,800000);
-    h_UHITS = new TH1I("h_UHITS","",45,0,300000);
-    h_VHITS = new TH1I("h_VHITS","",45,0,300000);
-    h_YHITS = new TH1I("h_YHITS","",60,0,400000);
-    h_UVHITS = new TH2I("h_UVHITS","",45,0,300000,60,0,400000);
+    h_HITS = new TH1I("h_HITS","",tnbins,0,tmax);
+    h_UHITS = new TH1I("h_UHITS","",unbins,0,umax);
+    h_VHITS = new TH1I("h_VHITS","",vnbins,0,vmax);
+    h_YHITS = new TH1I("h_YHITS","",ynbins,0,ymax);
+    h_UVHITS = new TH2I("h_UVHITS","",unbins,0,umax,vnbins,0,vmax);
+    h_UYHITS = new TH2I("h_UYHITS","",unbins,0,umax,ynbins,0,ymax);
+    h_VYHITS = new TH2I("h_VYHITS","",vnbins,0,vmax,ynbins,0,ymax);
     h_HITvAMP = new TH1I("h_HITvAMP","",80,0,200);
     h_QCUT = new TH1D("h_QCUT","",50,0,10);
     h_QNCUT = new TH1D("h_QNCUT","",50,0,10);
@@ -460,31 +469,41 @@ bool SimpleWFAna::initialize() {
     h_UHITS->Fill(uHit);
     h_VHITS->Fill(vHit);
     h_YHITS->Fill(yHit);
-    h_UVHITS->Fill(uHit,vHit);}
+    h_UVHITS->Fill(uHit,vHit);
+    h_UYHITS->Fill(uHit,yHit);
+    h_VYHITS->Fill(vHit,yHit);}
     if(option==2){
     h_HITS->Fill(stdTDC);
     h_UHITS->Fill(UstdTDC);
     h_VHITS->Fill(VstdTDC);
     h_YHITS->Fill(YstdTDC);
-    h_UVHITS->Fill(VstdTDC,YstdTDC);}
+    h_UVHITS->Fill(UstdTDC,VstdTDC);
+    h_UYHITS->Fill(UstdTDC,YstdTDC);
+    h_VYHITS->Fill(VstdTDC,YstdTDC);}
     if(option==3){
     h_HITS->Fill(MampADC);
     h_UHITS->Fill(UMampADC);
     h_VHITS->Fill(VMampADC);
     h_YHITS->Fill(YMampADC);
-    h_UVHITS->Fill(VMampADC,YMampADC);}
+    h_UVHITS->Fill(UMampADC,VMampADC);
+    h_UYHITS->Fill(UMampADC,YMampADC);
+    h_VYHITS->Fill(VMampADC,YMampADC);}
     if(option==4){
     h_HITS->Fill(intADC);
     h_UHITS->Fill(UintADC);
     h_VHITS->Fill(VintADC);
     h_YHITS->Fill(YintADC);
-    h_UVHITS->Fill(VintADC,YintADC);}
+    h_UVHITS->Fill(UintADC,VintADC);
+    h_UYHITS->Fill(UintADC,YintADC);
+    h_VYHITS->Fill(VintADC,YintADC);}
     if(option==5){
     h_HITS->Fill(iqrTDC);
     h_UHITS->Fill(UiqrTDC);
     h_VHITS->Fill(ViqrTDC);
     h_YHITS->Fill(YiqrTDC);
-    h_UVHITS->Fill(ViqrTDC,YiqrTDC);}
+    h_UVHITS->Fill(UiqrTDC,ViqrTDC);
+    h_UYHITS->Fill(UiqrTDC,YiqrTDC);
+    h_VYHITS->Fill(ViqrTDC,YiqrTDC);}
 
     // Count number of removed events outside of some tolerance of hit wires
     // Total cut
@@ -581,6 +600,8 @@ bool SimpleWFAna::initialize() {
     delete h_VHITS;
     delete h_YHITS;
     delete h_UVHITS;
+    delete h_UYHITS;
+    delete h_VYHITS;
     delete h_QCUT;
     delete h_QNCUT;
     delete h_HITvAMP;
@@ -624,6 +645,10 @@ bool SimpleWFAna::initialize() {
     delete h_YHITS;
     h_UVHITS->Write();
     delete h_UVHITS;
+    h_UYHITS->Write();
+    delete h_UYHITS;
+    h_VYHITS->Write();
+    delete h_VYHITS;
     h_QCUT->Write();
     delete h_QCUT;
     h_QNCUT->Write();
@@ -704,8 +729,6 @@ bool SimpleWFAna::initialize() {
     eventNo.clear(); hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
     NeutrinoTypeNo.clear(); Removedu.clear(); Removedv.clear(); Removedy.clear(); 
     Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); Removeduvy.clear(); RemovedType.clear(); 
-
-    //sDev.clear(), usDev.clear(), vsDev.clear(), ysDev.clear();
 
     return true;
   }
