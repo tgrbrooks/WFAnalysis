@@ -85,6 +85,7 @@ namespace larlite {
     std::vector <int> Removeduv;
     std::vector <int> Removeduy;
     std::vector <int> Removedvy; 
+    std::vector <int> Removeduvy;
     std::vector <int> RemovedType;
     std::vector <int> NeutrinoTypeNo;     
     

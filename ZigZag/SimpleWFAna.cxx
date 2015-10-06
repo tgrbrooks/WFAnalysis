@@ -177,6 +177,15 @@ double ampMean(std::vector<double> ADCvec) {
     return meanADC;
 }
 
+// Print to text file
+void PrintText(std::ofstream& fileptr, const std::vector<int>& removedno, const std::vector<int>& nutypeno) {
+    fileptr<<removedno[0]<<"% Total, "<<removedno[1]<<"/"<<nutypeno[0]<<" CCQE, "
+    <<removedno[2]<<"/"<<nutypeno[4]<<" NCQE, "<<removedno[3]<<"/"<<nutypeno[1]<<" CCRE, "
+    <<removedno[4]<<"/"<<nutypeno[5]<<" NCRE, "<<removedno[5]<<"/"<<nutypeno[2]<<" CCDIS, "
+    <<removedno[6]<<"/"<<nutypeno[6]<<" NCDIS, "<<removedno[7]<<"/"<<nutypeno[3]<<" CCCO, "
+    <<removedno[8]<<"/"<<nutypeno[7]<<" NCCO"<<std::endl<<std::endl;
+}
+
 // ---- MEMBER FUNCTIONS ---- //
 
 // Called at beginning of event loop
@@ -191,7 +200,9 @@ bool SimpleWFAna::initialize() {
     std::cin>>event;std::cout<<std::endl;
     std::cout<<"Enter Wire Number: ";
     std::cin>>wire;std::cout<<std::endl;*/
-    
+
+    // Set event type counters to zero - only used for last file
+    // NeutrinoTypeNo(8,0); // Neutrino Types CCQE, NCQE, CCRE, NCRE, CCDIS, NCDIS, CCCO and NCCO in that order.
     for(int i(0); i < 9; i++){
         Removedu.push_back(0); // Try using Removedu(9,0) instead?
         Removedv.push_back(0);
@@ -199,14 +210,11 @@ bool SimpleWFAna::initialize() {
         Removeduv.push_back(0);
         Removeduy.push_back(0);
         Removedvy.push_back(0);
+        Removeduvy.push_back(0);
         RemovedType.push_back(0);
-        if(i > 1) NeutrinoTypeNo.push_back(0);
+        if(i > 0) NeutrinoTypeNo.push_back(0);
     }
 
-    // Set counter of removed events to zero
-
-    // Set event type counters to zero - only used for last file
-    // NeutrinoTypeNo(8,0); // Neutrino Types CCQE, NCQE, CCRE, NCRE, CCDIS, NCDIS, CCCO and NCCO in that order.
 
     // Book histograms
     h_HITS = new TH1I("h_HITS","",60,0,800000);
@@ -549,6 +557,16 @@ bool SimpleWFAna::initialize() {
       }   
     }
 
+    // Cut on U, V and Y planes
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+      Removeduvy[0] ++;
+      if(!Type.empty()){
+        for(int j=0; j<8;j++){
+          if(Type[en]==j){Removeduvy[j+1] ++;}
+        }
+      }   
+    }
+
     _evtN += 1;
     return true;
   }
@@ -623,73 +641,69 @@ bool SimpleWFAna::initialize() {
     double avHNy = ampMean(yhitNo);
     double stDevy = WireSTD(yhitNo,avHNy);
 
-// ****** UNCOMMENT FOR AVERAGE ADC AMPLITUDE STANDARD DEVIATIONS ****** //
-    /*// CALCULATE AVERAGE STANDARD DEVIATIONS
-    double avSDev = ampMean(sDev);
-    double avSDevu = ampMean(usDev);
-    double avSDevv = ampMean(vsDev);
-    double avSDevy = ampMean(ysDev);*/
-
     // Write results to a .txt file
     std::ofstream myfile;
     myfile.open (tName);
+
+    if(option==1){
+    myfile<<"The average number of hits was: "<<avHN<<" +/- "<<stDev<<std::endl;
+    myfile<<"The average number of U hits was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+    myfile<<"The average number of V hits was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+    myfile<<"The average number of Y hits was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+
+    if(option==2){
+    myfile<<"The average TDC standard deviation was: "<<avHN<<" +/- "<<stDev<<std::endl;
+    myfile<<"The average U TDC standard deviation was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+    myfile<<"The average V TDC standard deviation was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+    myfile<<"The average Y TDC standard deviation was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+
+    if(option==3){
+    myfile<<"The average ADC amplitude was: "<<avHN<<" +/- "<<stDev<<std::endl;
+    myfile<<"The average U ADC amplitude was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+    myfile<<"The average V ADC amplitude was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+    myfile<<"The average Y ADC amplitude was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+
+    if(option==4){
     myfile<<"The average integrated charge was: "<<avHN<<" +/- "<<stDev<<std::endl;
-  //  myfile<<"The average ADC standard deviation was: "<<avSDev<<std::endl;
-    myfile<<"The average mean U integrated charge was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-  //  myfile<<"The average U ADC standard deviation was: "<<avSDevu<<std::endl;
-    myfile<<"The average mean V integrated charge was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-  //  myfile<<"The average V ADC standard deviation was: "<<avSDevv<<std::endl;
-    myfile<<"The average mean Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
-  //  myfile<<"The average Y ADC standard deviation was: "<<avSDevy<<std::endl;
+    myfile<<"The average U integrated charge was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+    myfile<<"The average V integrated charge was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+    myfile<<"The average Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
 
-    myfile<<"Total number of events removed: "
-<<RemovedType[0]<<"% Total, "<<RemovedType[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "
-<<RemovedType[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "<<RemovedType[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "
-<<RemovedType[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "<<RemovedType[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "
-<<RemovedType[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "<<RemovedType[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "
-<<RemovedType[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    if(option==5){
+    myfile<<"The average TDC interquartile range was: "<<avHN<<" +/- "<<stDev<<std::endl;
+    myfile<<"The average U interquartile range was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+    myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+    myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
 
-    myfile<<"Number of events removed using u info: "<<Removedu[0]<<"% Total, "
-<<Removedu[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedu[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removedu[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedu[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removedu[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedu[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removedu[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedu[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Total number of events removed: ";
+    PrintText(myfile,RemovedType,NeutrinoTypeNo);
 
-    myfile<<"Number of events removed using v info: "<<Removedv[0]<<"% Total, "
-<<Removedv[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedv[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removedv[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedv[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removedv[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedv[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removedv[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedv[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Number of events removed using u info: ";
+    PrintText(myfile,Removedu,NeutrinoTypeNo);
 
-    myfile<<"Number of events removed using y info: "<<Removedy[0]<<"% Total, "
-<<Removedy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removedy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removedy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removedy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Number of events removed using v info: ";
+    PrintText(myfile,Removedv,NeutrinoTypeNo);
 
-    myfile<<"Number of events removed using u and v info: "<<Removeduv[0]<<"% Total, "
-<<Removeduv[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removeduv[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removeduv[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removeduv[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removeduv[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removeduv[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removeduv[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removeduv[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Number of events removed using y info: ";
+    PrintText(myfile,Removedy,NeutrinoTypeNo);
 
-    myfile<<"Number of events removed using v and y info: "<<Removedvy[0]<<"% Total, "
-<<Removedvy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removedvy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removedvy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removedvy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removedvy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removedvy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removedvy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removedvy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Number of events removed using u and v info: ";
+    PrintText(myfile,Removeduv,NeutrinoTypeNo);
 
-    myfile<<"Number of events removed using y and u info: "<<Removeduy[0]<<"% Total, "
-<<Removeduy[1]<<"/"<<NeutrinoTypeNo[0]<<" CCQE, "<<Removeduy[2]<<"/"<<NeutrinoTypeNo[4]<<" NCQE, "
-<<Removeduy[3]<<"/"<<NeutrinoTypeNo[1]<<" CCRE, "<<Removeduy[4]<<"/"<<NeutrinoTypeNo[5]<<" NCRE, "
-<<Removeduy[5]<<"/"<<NeutrinoTypeNo[2]<<" CCDIS, "<<Removeduy[6]<<"/"<<NeutrinoTypeNo[6]<<" NCDIS, "
-<<Removeduy[7]<<"/"<<NeutrinoTypeNo[3]<<" CCCO, "<<Removeduy[8]<<"/"<<NeutrinoTypeNo[7]<<" NCCO"<<std::endl<<std::endl;
+    myfile<<"Number of events removed using v and y info: ";
+    PrintText(myfile,Removedvy,NeutrinoTypeNo);
+
+    myfile<<"Number of events removed using u and y info: ";
+    PrintText(myfile,Removeduy,NeutrinoTypeNo);
+
+    myfile<<"Number of events removed using u, v and y info: ";
+    PrintText(myfile,Removeduvy,NeutrinoTypeNo);
 
     myfile.close();
 
     eventNo.clear(); hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
     NeutrinoTypeNo.clear(); Removedu.clear(); Removedv.clear(); Removedy.clear(); 
-    Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); RemovedType.clear();
+    Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); Removeduvy.clear(); RemovedType.clear(); 
 
     //sDev.clear(), usDev.clear(), vsDev.clear(), ysDev.clear();
 
