@@ -193,6 +193,7 @@ bool SimpleWFAna::initialize() {
 
     // Set event number to 0
     _evtN = 0;
+    TH1::AddDirectory(kFALSE);
 
     // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
     /*// Ask for event and wire number to display graph of digital waveform
@@ -292,7 +293,7 @@ bool SimpleWFAna::initialize() {
     vHit = 0;
     yHit = 0;
 
-// ****** UNCOMMENT TO CUT ON INTEGRATED WAVEFORMS ****** //
+// ****** CUT ON INTEGRATED WAVEFORMS ****** //
     if(option==4){
     // Initialize integration counter for event
     intADC = 0;
@@ -300,7 +301,7 @@ bool SimpleWFAna::initialize() {
     VintADC = 0;
     YintADC = 0;}
 
-// ****** UNCOMMENT TO CUT ON TDC SPREAD ****** //
+// ****** CUT ON TDC SPREAD ****** //
     if(option==2||option==5){
     // Clear TDC vectors
     TDCvec.clear();
@@ -308,7 +309,7 @@ bool SimpleWFAna::initialize() {
     VTDCvec.clear();
     YTDCvec.clear();}
 
-// ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
+// ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
     // Clear ADC vectors
     ADCvec.clear();
@@ -342,7 +343,7 @@ bool SimpleWFAna::initialize() {
         if(i>=2400&&i<4800){vHit = vHit + hitPerWire(adcs,T,offset);}
         if(i>=4800&&i<8256){yHit = yHit + hitPerWire(adcs,T,offset);}
 
-// ****** UNCOMMENT TO CUT ON INTEGRATED WAVEFORMS ****** //
+// ****** CUT ON INTEGRATED WAVEFORMS ****** //
     if(option==4){
     // Loop over TDC time
     for(size_t j=0;j<adcs.size()-1;++j){
@@ -358,7 +359,7 @@ bool SimpleWFAna::initialize() {
         }
     }}
 
-// ****** UNCOMMENT TO CUT ON TDC SPREAD ****** //
+// ****** CUT ON TDC SPREAD ****** //
     if(option==2||option==5){
     // Get TDCs of hits and sort into planes
     std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
@@ -369,7 +370,7 @@ bool SimpleWFAna::initialize() {
         if(i>=4800&&i<8256){YTDCvec.push_back(v_TDCs[f]);}
     }}
 
-// ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
+// ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
     // Get ADC amplitudes of hits and sort into planes
     std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
@@ -390,7 +391,7 @@ bool SimpleWFAna::initialize() {
 
   }
 
-// ****** UNCOMMENT TO CUT ON TDC STANDARD DEVIATION ****** //
+// ****** CUT ON TDC STANDARD DEVIATION ****** //
     if(option==2){
     // Calculate standard deviations of TDCs of hits in each plane
     stdTDC = TDCstd(TDCvec);
@@ -403,7 +404,7 @@ bool SimpleWFAna::initialize() {
     if(isnan(VstdTDC)==1){VstdTDC=0;}
     if(isnan(YstdTDC)==1){YstdTDC=0;}}
 
-// ****** UNCOMMENT TO CUT ON TDC INTERQUARTILE RANGE ****** //
+// ****** CUT ON TDC INTERQUARTILE RANGE ****** //
     if(option==5){
     // If there are no hits set interquartile range to zero else calculte normally
     if(_isHit!=0){iqrTDC = TDCiqr(TDCvec,_isHit);}else{iqrTDC=0;}
@@ -411,7 +412,7 @@ bool SimpleWFAna::initialize() {
     if(vHit!=0){ViqrTDC = TDCiqr(VTDCvec,vHit);}else{ViqrTDC=0;}
     if(yHit!=0){YiqrTDC = TDCiqr(YTDCvec,yHit);}else{YiqrTDC=0;}}
 
-// ****** UNCOMMENT TO CUT ON ADC AMPLITUDE ******* //
+// ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
     // Calculate mean and standard deviation of amplitudes
     if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
@@ -450,12 +451,6 @@ bool SimpleWFAna::initialize() {
     uhitNo.push_back(UiqrTDC);
     vhitNo.push_back(ViqrTDC);
     yhitNo.push_back(YiqrTDC);}
-
-// ****** UNCOMMENT TO CALCULTE ADC AMPLITUDE STANDARD DEVIATIONS ****** //
-    /**sDev.push_back(SDampADC);
-    usDev.push_back(USDampADC);
-    vsDev.push_back(VSDampADC);
-    ysDev.push_back(YSDampADC);*/
 
     // Fill histograms
     // Different cuts will need different ranges
@@ -528,7 +523,7 @@ bool SimpleWFAna::initialize() {
         }
       }
     }else{
-      if(!Type.empty()){
+      if(!Type.empty()&&plane==1){
         for(int j=0; j < 8; j++){
           if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
         }
@@ -542,7 +537,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removedv[j+1] ++;}      
         }
       }
-    }
+    }else{
+      if(!Type.empty()&&plane==2){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on Y plane
     if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){
@@ -552,7 +552,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removedy[j+1] ++;}
         }
       }
-    }
+    }else{
+      if(!Type.empty()&&plane==3){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on U and V planes also fill cutting histograms
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
@@ -562,7 +567,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removeduv[j+1] ++;}
         }
       }
-    }
+    }else{
+      if(!Type.empty()&&plane==4){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on U and Y planes
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){
@@ -572,7 +582,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removeduy[j+1] ++;}
         }
       } 
-    }
+    }else{
+      if(!Type.empty()&&plane==5){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on V and Y planes
     if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
@@ -582,7 +597,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removedvy[j+1] ++;}
         }
       }   
-    }
+    }else{
+      if(!Type.empty()&&plane==6){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on U, V and Y planes
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
@@ -592,7 +612,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removeduvy[j+1] ++;}
         }
       }   
-    }
+    }else{
+      if(!Type.empty()&&plane==7){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     _evtN += 1;
     return true;
@@ -611,12 +636,9 @@ bool SimpleWFAna::initialize() {
     delete h_UYHITS;
     delete h_VYHITS;
     return true;}
-
-    while(!TypeEnergyBef.empty()){
-        std::cout<<TypeEnergyBef.begin()->first<<" ";
-        std::cout<<TypeEnergyBef.begin()->second<<"\n";
-        TypeEnergyBef.erase(TypeEnergyBef.begin());
-    }
+    
+    std::string StrArray[8] = {"h_QCCQE", "h_QNCQE", "h_QCCRE", "h_QNCRE", "h_QCCDIS", "h_QNCDIS", "h_QCCCO", "h_QNCCO"};
+    std::string nCutStrArray[8] = {"h_NCUTQCCQE", "h_NCUTQNCQE", "h_NCUTQCCRE", "h_NCUTQNCRE", "h_NCUTQCCDIS", "h_NCUTQNCDIS", "h_NCUTQCCCO", "h_NCUTQNCCO"};
 
     // Calculate min and max limits for each plane - only important for nnbar file
     Tmin = hitNo[0];
@@ -660,6 +682,28 @@ bool SimpleWFAna::initialize() {
     delete h_UYHITS;
     h_VYHITS->Write();
     delete h_VYHITS;
+    if(!TypeEnergyBef.empty()){
+        for(int i=0;i<8;i++){
+           h_TempHisto = new TH1D(StrArray[i].c_str(),"",50,0,10);
+           for(auto it=TypeEnergyBef.begin(); it!=TypeEnergyBef.end();){
+             if((*it).first==i){
+               h_TempHisto->Fill((*it).second);
+               it = TypeEnergyBef.erase(it);
+             } else {++it;}
+           }
+           h_nCutTempHisto = new TH1D(nCutStrArray[i].c_str(),"",50,0,10);
+           for(auto it2=TypeEnergy.begin(); it2!=TypeEnergy.end();){
+             if((*it2).first==i){
+               h_nCutTempHisto->Fill((*it2).second);
+               it2 = TypeEnergy.erase(it2);
+             } else {++it2;}
+           }
+           h_TempHisto->Write();
+           h_nCutTempHisto->Write();
+           delete h_TempHisto;
+           delete h_nCutTempHisto;
+        }
+    }
     outfile->Close();
 
     // Calculate averages and standard deviations
