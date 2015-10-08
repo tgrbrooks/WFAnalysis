@@ -58,6 +58,8 @@ namespace larlite {
     TH1I  *h_HITvAMP;
     TH1D  *h_QCUT;
     TH1D  *h_QNCUT;
+    TH1D  *h_TempHisto;
+    TH1D  *h_nCutTempHisto;
 
   protected: //Pretty sure this doesn't need to be protected
 
@@ -118,6 +120,7 @@ namespace larlite {
     int truthflag;
 
     int option;
+    int plane;
 
     std::multimap<int,double> TypeEnergy;
     std::multimap<int,double> TypeEnergyBef;
@@ -125,7 +128,7 @@ namespace larlite {
   public:
 
     /// Default constructor
-    SimpleWFAna(double T,std::string name,std::string fname,int op ) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op; };
+    SimpleWFAna(double T,std::string name,std::string fname,int op,int pln) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op;plane=pln; };
 
     /// Default destructor
     virtual ~SimpleWFAna(){};

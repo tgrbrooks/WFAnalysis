@@ -21,6 +21,14 @@ while True:
 	except(option not in [1,2,3,4,5]):
 		print('Must be an integer between 1 and 5')
 
+print('Enter a plane(s) to plot energy dist (1=U, 2=V, 3=Y, 4=UV, 5=UY, 6=VY, 7=UVY):')
+while True:
+        try:
+                plane = int(raw_input());
+                break
+        except(option not in [1,2,3,4,5,6,7]):
+                print('Must be an integer between 1 and 7')
+
 # Loop over different tolerances changing file names each time
 for x in range (0,6):
 	if x == 3:
@@ -69,7 +77,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	ana_unit = fmwk.SimpleWFAna(T,fname,tname,option)
+	ana_unit = fmwk.SimpleWFAna(T,fname,tname,option,plane)
 	
 	my_proc.add_process(ana_unit)
 	
@@ -102,7 +110,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc1.set_io_mode(fmwk.storage_manager.kREAD)
 
-	ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt",option)
+	ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt",option,plane)
 
 	my_proc1.add_process(ana_unit1)
 
@@ -130,7 +138,7 @@ for x in range (0,6):
 	# Specify IO mode
 	my_proc2.set_io_mode(fmwk.storage_manager.kREAD)
 	
-	ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1,option)
+	ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1,option,plane)
 	
 	# Set cut limits, interaction types and neutrino energies
 	ana_unit2.SetTmin(t_min)
