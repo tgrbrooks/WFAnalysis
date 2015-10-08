@@ -231,9 +231,6 @@ bool SimpleWFAna::initialize() {
     h_UVHITS = new TH2I("h_UVHITS","",unbins,0,umax,vnbins,0,vmax);
     h_UYHITS = new TH2I("h_UYHITS","",unbins,0,umax,ynbins,0,ymax);
     h_VYHITS = new TH2I("h_VYHITS","",vnbins,0,vmax,ynbins,0,ymax);
-    h_HITvAMP = new TH1I("h_HITvAMP","",80,0,200);
-    h_QCUT = new TH1D("h_QCUT","",50,0,10);
-    h_QNCUT = new TH1D("h_QNCUT","",50,0,10);
 
     // Count event types
     if(!Type.empty()){
@@ -505,6 +502,12 @@ bool SimpleWFAna::initialize() {
     h_UYHITS->Fill(UiqrTDC,YiqrTDC);
     h_VYHITS->Fill(ViqrTDC,YiqrTDC);}
 
+    if(!Type.empty()){
+      for(int j=0; j < 8; j++){
+        if(Type[en]==j){TypeEnergyBef.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+      }
+    }
+
     // Count number of removed events outside of some tolerance of hit wires
     // Total cut
     if(hitNo[en]>Tmax||hitNo[en]<Tmin){
@@ -524,7 +527,12 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removedu[j+1] ++;}
         }
       }
-    }
+    }else{
+      if(!Type.empty()){
+        for(int j=0; j < 8; j++){
+          if(Type[en]==j){TypeEnergy.insert(std::pair<int,double>(Type[en],Qsq[en]));}
+        }
+      }}
 
     // Cut on V plane
     if(vhitNo[en]>Vmax||vhitNo[en]<Vmin){
@@ -554,7 +562,7 @@ bool SimpleWFAna::initialize() {
           if(Type[en]==j){Removeduv[j+1] ++;}
         }
       }
-    }else {if(!Type.empty()){h_QNCUT->Fill(Qsq[en]);}}
+    }
 
     // Cut on U and Y planes
     if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){
@@ -602,10 +610,13 @@ bool SimpleWFAna::initialize() {
     delete h_UVHITS;
     delete h_UYHITS;
     delete h_VYHITS;
-    delete h_QCUT;
-    delete h_QNCUT;
-    delete h_HITvAMP;
     return true;}
+
+    while(!TypeEnergyBef.empty()){
+        std::cout<<TypeEnergyBef.begin()->first<<" ";
+        std::cout<<TypeEnergyBef.begin()->second<<"\n";
+        TypeEnergyBef.erase(TypeEnergyBef.begin());
+    }
 
     // Calculate min and max limits for each plane - only important for nnbar file
     Tmin = hitNo[0];
@@ -649,11 +660,6 @@ bool SimpleWFAna::initialize() {
     delete h_UYHITS;
     h_VYHITS->Write();
     delete h_VYHITS;
-    h_QCUT->Write();
-    delete h_QCUT;
-    h_QNCUT->Write();
-    delete h_QNCUT;
-    delete h_HITvAMP;
     outfile->Close();
 
     // Calculate averages and standard deviations

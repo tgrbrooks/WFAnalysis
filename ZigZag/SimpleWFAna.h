@@ -37,6 +37,7 @@
 #include <TFile.h>
 #include <string>
 #include <fstream>
+#include <map>
 
 namespace larlite {
   /**
@@ -117,6 +118,9 @@ namespace larlite {
     int truthflag;
 
     int option;
+
+    std::multimap<int,double> TypeEnergy;
+    std::multimap<int,double> TypeEnergyBef;
 
   public:
 
