@@ -178,8 +178,8 @@ double ampMean(std::vector<double> ADCvec) {
 }
 
 // Print to text file
-void PrintText(std::ofstream& fileptr, const std::vector<int>& removedno, const std::vector<int>& nutypeno) {
-    fileptr<<removedno[0]<<"% Total, "<<removedno[1]<<"/"<<nutypeno[0]<<" CCQE, "
+void PrintText(std::ofstream& fileptr, const std::vector<int>& removedno, const std::vector<int>& nutypeno,int size) {
+    fileptr<<removedno[0]/size<<"% Total, "<<removedno[1]<<"/"<<nutypeno[0]<<" CCQE, "
     <<removedno[2]<<"/"<<nutypeno[4]<<" NCQE, "<<removedno[3]<<"/"<<nutypeno[1]<<" CCRE, "
     <<removedno[4]<<"/"<<nutypeno[5]<<" NCRE, "<<removedno[5]<<"/"<<nutypeno[2]<<" CCDIS, "
     <<removedno[6]<<"/"<<nutypeno[6]<<" NCDIS, "<<removedno[7]<<"/"<<nutypeno[3]<<" CCCO, "
@@ -235,7 +235,7 @@ bool SimpleWFAna::initialize() {
 
     // Count event types
     if(!Type.empty()){
-        for(int i=0;i<100;i++){
+        for(size_t i=0;i<Type.size();i++){
             for(int j=0;j<8;j++){
                 if(Type[i]==j) NeutrinoTypeNo[j] ++; // Loop over all neutrino types. See vector initialisation above.
             }
@@ -436,7 +436,7 @@ bool SimpleWFAna::initialize() {
     uhitNo.push_back(UstdTDC);
     vhitNo.push_back(VstdTDC);
     yhitNo.push_back(YstdTDC);}
-    if(option==4){
+    if(option==3){
     hitNo.push_back(MampADC);
     uhitNo.push_back(UMampADC);
     vhitNo.push_back(VMampADC);
@@ -750,29 +750,31 @@ bool SimpleWFAna::initialize() {
     myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
     myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
 
+    int size = hitNo.size()/100;
+
     myfile<<"Total number of events removed: ";
-    PrintText(myfile,RemovedType,NeutrinoTypeNo);
+    PrintText(myfile,RemovedType,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using u info: ";
-    PrintText(myfile,Removedu,NeutrinoTypeNo);
+    PrintText(myfile,Removedu,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using v info: ";
-    PrintText(myfile,Removedv,NeutrinoTypeNo);
+    PrintText(myfile,Removedv,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using y info: ";
-    PrintText(myfile,Removedy,NeutrinoTypeNo);
+    PrintText(myfile,Removedy,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using u and v info: ";
-    PrintText(myfile,Removeduv,NeutrinoTypeNo);
+    PrintText(myfile,Removeduv,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using v and y info: ";
-    PrintText(myfile,Removedvy,NeutrinoTypeNo);
+    PrintText(myfile,Removedvy,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using u and y info: ";
-    PrintText(myfile,Removeduy,NeutrinoTypeNo);
+    PrintText(myfile,Removeduy,NeutrinoTypeNo,size);
 
     myfile<<"Number of events removed using u, v and y info: ";
-    PrintText(myfile,Removeduvy,NeutrinoTypeNo);
+    PrintText(myfile,Removeduvy,NeutrinoTypeNo,size);
 
     myfile.close();
 
