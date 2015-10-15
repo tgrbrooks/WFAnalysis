@@ -116,9 +116,7 @@ std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double o
     return v_ADCamp;
 }
 
-// THIS IS NOT GENERALISABLE. NEED TO MERGE WITH TDCstd.
 // Function to return standard error
-
 double WireSTD(std::vector<double> hitNo, double avHN) {
     // Calculate standard error on the mean in number of hits
     double stDev = 0;
@@ -295,27 +293,33 @@ bool SimpleWFAna::initialize() {
 
 // ****** CUT ON INTEGRATED WAVEFORMS ****** //
     if(option==4){
-    // Initialize integration counter for event
-    intADC = 0;
-    UintADC = 0;
-    VintADC = 0;
-    YintADC = 0;}
+        // Initialize integration counter for event
+        intADC = 0;
+        UintADC = 0;
+        VintADC = 0;
+        YintADC = 0;
+    }
 
 // ****** CUT ON TDC SPREAD ****** //
     if(option==2||option==5){
-    // Clear TDC vectors
-    TDCvec.clear();
-    UTDCvec.clear();
-    VTDCvec.clear();
-    YTDCvec.clear();}
+        // Clear TDC vectors
+        TDCvec.clear();
+        UTDCvec.clear();
+        VTDCvec.clear();
+        YTDCvec.clear();
+    }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
-    // Clear ADC vectors
-    ADCvec.clear();
-    UADCvec.clear();
-    VADCvec.clear();
-    YADCvec.clear();}
+        // Clear ADC vectors
+        ADCvec.clear();
+        UADCvec.clear();
+        VADCvec.clear();
+        YADCvec.clear();
+    }
+
+    double offset = 0;
+    double T = 0;
 
     // Loop over all wires in event
     for (size_t i=0; i < wfs->size(); i++){
@@ -323,16 +327,17 @@ bool SimpleWFAna::initialize() {
         auto const& wf = (*wfs).at(i);
         // Convert from analogue to digital
         auto const& adcs = wf.ADCs();
+        if (i==0){
+            // Calculate Mean
+            for(size_t j=0; j<adcs.size(); ++j)
+              _mean += adcs[j];
+            _mean /= ((float)adcs.size());
 
-        // Calculate Mean
-        for(size_t j=0; j<adcs.size(); ++j)
-          _mean += adcs[j];
-        _mean /= ((float)adcs.size());
-
-        // Calculate offset from mean
-        double offset = static_cast<double>(_mean);
-        // Get tolerance from python script
-        double T = SimpleWFAna::GetT();
+            // Calculate offset from mean
+            offset = static_cast<double>(_mean);
+            // Get tolerance from python script
+            T = SimpleWFAna::GetT();
+        }
 
         // Calculate total number of hits
         // Add to hit counter for event
@@ -345,41 +350,44 @@ bool SimpleWFAna::initialize() {
 
 // ****** CUT ON INTEGRATED WAVEFORMS ****** //
     if(option==4){
-    // Loop over TDC time
-    for(size_t j=0;j<adcs.size()-1;++j){
-        // Get offset adjusted modulus of two points
-        double x1 = pow(pow(adcs[j]-offset,2),0.5);
-        double x2 = pow(pow(adcs[j+1]-offset,2),0.5);
-        // If both above tolerance add up area between them
-        if(x1>T&&x2>T){
-            intADC = intADC + 0.5*x1 + 0.5*x2;
-            if(i<2400){UintADC = UintADC + 0.5*x1 + 0.5*x2;}
-            if(i>=2400&&i<4800){VintADC = VintADC + 0.5*x1 + 0.5*x2;}
-            if(i>=4800&&i<8256){YintADC = YintADC + 0.5*x1 + 0.5*x2;}
+        // Loop over TDC time
+        for(size_t j=0;j<adcs.size()-1;++j){
+            // Get offset adjusted modulus of two points
+            double x1 = pow(pow(adcs[j]-offset,2),0.5);
+            double x2 = pow(pow(adcs[j+1]-offset,2),0.5);
+            // If both above tolerance add up area between them
+            if(x1>T&&x2>T){
+                intADC = intADC + 0.5*x1 + 0.5*x2;
+                if(i<2400){UintADC = UintADC + 0.5*x1 + 0.5*x2;}
+                if(i>=2400&&i<4800){VintADC = VintADC + 0.5*x1 + 0.5*x2;}
+                if(i>=4800&&i<8256){YintADC = YintADC + 0.5*x1 + 0.5*x2;}
+            }
         }
-    }}
+    }
 
 // ****** CUT ON TDC SPREAD ****** //
     if(option==2||option==5){
-    // Get TDCs of hits and sort into planes
-    std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
-    for (size_t f=0; f<v_TDCs.size(); ++f) {
-        TDCvec.push_back(v_TDCs[f]);
-        if(i<2400){UTDCvec.push_back(v_TDCs[f]);}
-        if(i>=2400&&i<4800){VTDCvec.push_back(v_TDCs[f]);}
-        if(i>=4800&&i<8256){YTDCvec.push_back(v_TDCs[f]);}
-    }}
+        // Get TDCs of hits and sort into planes
+        std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
+        for (size_t f=0; f<v_TDCs.size(); ++f) {
+            TDCvec.push_back(v_TDCs[f]);
+            if(i<2400){UTDCvec.push_back(v_TDCs[f]);}
+            if(i>=2400&&i<4800){VTDCvec.push_back(v_TDCs[f]);}
+            if(i>=4800&&i<8256){YTDCvec.push_back(v_TDCs[f]);}
+        }
+    }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
-    // Get ADC amplitudes of hits and sort into planes
-    std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
-    for (size_t f=0; f<v_ADCamp.size(); ++f) {
-        ADCvec.push_back(v_ADCamp[f]);
-        if(i<2400){UADCvec.push_back(v_ADCamp[f]);}
-        if(i>=2400&&i<4800){VADCvec.push_back(v_ADCamp[f]);}
-        if(i>=4800&&i<8256){YADCvec.push_back(v_ADCamp[f]);}
-    }}
+        // Get ADC amplitudes of hits and sort into planes
+        std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
+        for (size_t f=0; f<v_ADCamp.size(); ++f) {
+            ADCvec.push_back(v_ADCamp[f]);
+            if(i<2400){UADCvec.push_back(v_ADCamp[f]);}
+            if(i>=2400&&i<4800){VADCvec.push_back(v_ADCamp[f]);}
+            if(i>=4800&&i<8256){YADCvec.push_back(v_ADCamp[f]);}
+        }
+    }
 
 // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
     //Draw digital waveform for channel i
@@ -393,109 +401,120 @@ bool SimpleWFAna::initialize() {
 
 // ****** CUT ON TDC STANDARD DEVIATION ****** //
     if(option==2){
-    // Calculate standard deviations of TDCs of hits in each plane
-    stdTDC = TDCstd(TDCvec);
-    UstdTDC = TDCstd(UTDCvec);
-    VstdTDC = TDCstd(VTDCvec);
-    YstdTDC = TDCstd(YTDCvec);
-    // If not a number set to zero
-    if(isnan(stdTDC)==1){stdTDC=0;}
-    if(isnan(UstdTDC)==1){UstdTDC=0;}
-    if(isnan(VstdTDC)==1){VstdTDC=0;}
-    if(isnan(YstdTDC)==1){YstdTDC=0;}}
+        // Calculate standard deviations of TDCs of hits in each plane
+        stdTDC = TDCstd(TDCvec);
+        UstdTDC = TDCstd(UTDCvec);
+        VstdTDC = TDCstd(VTDCvec);
+        YstdTDC = TDCstd(YTDCvec);
+        // If not a number set to zero
+        if(isnan(stdTDC)==1){stdTDC=0;}
+        if(isnan(UstdTDC)==1){UstdTDC=0;}
+        if(isnan(VstdTDC)==1){VstdTDC=0;}
+        if(isnan(YstdTDC)==1){YstdTDC=0;}
+    }
 
 // ****** CUT ON TDC INTERQUARTILE RANGE ****** //
     if(option==5){
-    // If there are no hits set interquartile range to zero else calculte normally
-    if(_isHit!=0){iqrTDC = TDCiqr(TDCvec,_isHit);}else{iqrTDC=0;}
-    if(uHit!=0){UiqrTDC = TDCiqr(UTDCvec,uHit);}else{UiqrTDC=0;}
-    if(vHit!=0){ViqrTDC = TDCiqr(VTDCvec,vHit);}else{ViqrTDC=0;}
-    if(yHit!=0){YiqrTDC = TDCiqr(YTDCvec,yHit);}else{YiqrTDC=0;}}
+        // If there are no hits set interquartile range to zero else calculte normally
+        if(_isHit!=0){iqrTDC = TDCiqr(TDCvec,_isHit);}else{iqrTDC=0;}
+        if(uHit!=0){UiqrTDC = TDCiqr(UTDCvec,uHit);}else{UiqrTDC=0;}
+        if(vHit!=0){ViqrTDC = TDCiqr(VTDCvec,vHit);}else{ViqrTDC=0;}
+        if(yHit!=0){YiqrTDC = TDCiqr(YTDCvec,yHit);}else{YiqrTDC=0;}
+    }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
-    // Calculate mean and standard deviation of amplitudes
-    if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
-    if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = ampStd(UADCvec,UMampADC);}else{UMampADC=0;USDampADC=0;}
-    if(vHit!=0){VMampADC = ampMean(VADCvec);VSDampADC = ampStd(VADCvec,VMampADC);}else{VMampADC=0;VSDampADC=0;}
-    if(yHit!=0){YMampADC = ampMean(YADCvec);YSDampADC = ampStd(YADCvec,YMampADC);}else{YMampADC=0;YSDampADC=0;}}
+        // Calculate mean and standard deviation of amplitudes
+        if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
+        if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = ampStd(UADCvec,UMampADC);}else{UMampADC=0;USDampADC=0;}
+        if(vHit!=0){VMampADC = ampMean(VADCvec);VSDampADC = ampStd(VADCvec,VMampADC);}else{VMampADC=0;VSDampADC=0;}
+        if(yHit!=0){YMampADC = ampMean(YADCvec);YSDampADC = ampStd(YADCvec,YMampADC);}else{YMampADC=0;YSDampADC=0;}
+    }
 
-    // Fill arrays of doubles with event number
     int en = _evtN;
-    eventNo.push_back(_evtN);
 
     // Fill arrays with whatever variable you want to cut - nothing beyond here should have to be changed
     // Work with _isHit/uHit, intADC, stdTDC, iqrTDC, MampADC
     if(option==1){
-    hitNo.push_back(_isHit);
-    uhitNo.push_back(uHit);
-    vhitNo.push_back(vHit);
-    yhitNo.push_back(yHit);}
+        hitNo.push_back(_isHit);
+        uhitNo.push_back(uHit);
+        vhitNo.push_back(vHit);
+        yhitNo.push_back(yHit);
+    }
     if(option==2){
-    hitNo.push_back(stdTDC);
-    uhitNo.push_back(UstdTDC);
-    vhitNo.push_back(VstdTDC);
-    yhitNo.push_back(YstdTDC);}
+        hitNo.push_back(stdTDC);
+        uhitNo.push_back(UstdTDC);
+        vhitNo.push_back(VstdTDC);
+        yhitNo.push_back(YstdTDC);
+    }
     if(option==3){
-    hitNo.push_back(MampADC);
-    uhitNo.push_back(UMampADC);
-    vhitNo.push_back(VMampADC);
-    yhitNo.push_back(YMampADC);}
+        hitNo.push_back(MampADC);
+        uhitNo.push_back(UMampADC);
+        vhitNo.push_back(VMampADC);
+        yhitNo.push_back(YMampADC);
+    }
     if(option==4){
-    hitNo.push_back(intADC);
-    uhitNo.push_back(UintADC);
-    vhitNo.push_back(VintADC);
-    yhitNo.push_back(YintADC);}
+        hitNo.push_back(intADC);
+        uhitNo.push_back(UintADC);
+        vhitNo.push_back(VintADC);
+        yhitNo.push_back(YintADC);
+    }
     if(option==5){
-    hitNo.push_back(iqrTDC);
-    uhitNo.push_back(UiqrTDC);
-    vhitNo.push_back(ViqrTDC);
-    yhitNo.push_back(YiqrTDC);}
+        hitNo.push_back(iqrTDC);
+        uhitNo.push_back(UiqrTDC);
+        vhitNo.push_back(ViqrTDC);
+        yhitNo.push_back(YiqrTDC);
+    }
 
     // Fill histograms
     // Different cuts will need different ranges
     // Change variables as before
     // Separate hits into the three wire planes
     if(option==1){
-    h_HITS->Fill(_isHit);
-    h_UHITS->Fill(uHit);
-    h_VHITS->Fill(vHit);
-    h_YHITS->Fill(yHit);
-    h_UVHITS->Fill(uHit,vHit);
-    h_UYHITS->Fill(uHit,yHit);
-    h_VYHITS->Fill(vHit,yHit);}
+        h_HITS->Fill(_isHit);
+        h_UHITS->Fill(uHit);
+        h_VHITS->Fill(vHit);
+        h_YHITS->Fill(yHit);
+        h_UVHITS->Fill(uHit,vHit);
+        h_UYHITS->Fill(uHit,yHit);
+        h_VYHITS->Fill(vHit,yHit);
+    }
     if(option==2){
-    h_HITS->Fill(stdTDC);
-    h_UHITS->Fill(UstdTDC);
-    h_VHITS->Fill(VstdTDC);
-    h_YHITS->Fill(YstdTDC);
-    h_UVHITS->Fill(UstdTDC,VstdTDC);
-    h_UYHITS->Fill(UstdTDC,YstdTDC);
-    h_VYHITS->Fill(VstdTDC,YstdTDC);}
+        h_HITS->Fill(stdTDC);
+        h_UHITS->Fill(UstdTDC);
+        h_VHITS->Fill(VstdTDC);
+        h_YHITS->Fill(YstdTDC);
+        h_UVHITS->Fill(UstdTDC,VstdTDC);
+        h_UYHITS->Fill(UstdTDC,YstdTDC);
+        h_VYHITS->Fill(VstdTDC,YstdTDC);
+    }
     if(option==3){
-    h_HITS->Fill(MampADC);
-    h_UHITS->Fill(UMampADC);
-    h_VHITS->Fill(VMampADC);
-    h_YHITS->Fill(YMampADC);
-    h_UVHITS->Fill(UMampADC,VMampADC);
-    h_UYHITS->Fill(UMampADC,YMampADC);
-    h_VYHITS->Fill(VMampADC,YMampADC);}
+        h_HITS->Fill(MampADC);
+        h_UHITS->Fill(UMampADC);
+        h_VHITS->Fill(VMampADC);
+        h_YHITS->Fill(YMampADC);
+        h_UVHITS->Fill(UMampADC,VMampADC);
+        h_UYHITS->Fill(UMampADC,YMampADC);
+        h_VYHITS->Fill(VMampADC,YMampADC);
+    }
     if(option==4){
-    h_HITS->Fill(intADC);
-    h_UHITS->Fill(UintADC);
-    h_VHITS->Fill(VintADC);
-    h_YHITS->Fill(YintADC);
-    h_UVHITS->Fill(UintADC,VintADC);
-    h_UYHITS->Fill(UintADC,YintADC);
-    h_VYHITS->Fill(VintADC,YintADC);}
+        h_HITS->Fill(intADC);
+        h_UHITS->Fill(UintADC);
+        h_VHITS->Fill(VintADC);
+        h_YHITS->Fill(YintADC);
+        h_UVHITS->Fill(UintADC,VintADC);
+        h_UYHITS->Fill(UintADC,YintADC);
+        h_VYHITS->Fill(VintADC,YintADC);
+    }
     if(option==5){
-    h_HITS->Fill(iqrTDC);
-    h_UHITS->Fill(UiqrTDC);
-    h_VHITS->Fill(ViqrTDC);
-    h_YHITS->Fill(YiqrTDC);
-    h_UVHITS->Fill(UiqrTDC,ViqrTDC);
-    h_UYHITS->Fill(UiqrTDC,YiqrTDC);
-    h_VYHITS->Fill(ViqrTDC,YiqrTDC);}
+        h_HITS->Fill(iqrTDC);
+        h_UHITS->Fill(UiqrTDC);
+        h_VHITS->Fill(ViqrTDC);
+        h_YHITS->Fill(YiqrTDC);
+        h_UVHITS->Fill(UiqrTDC,ViqrTDC);
+        h_UYHITS->Fill(UiqrTDC,YiqrTDC);
+        h_VYHITS->Fill(ViqrTDC,YiqrTDC);
+    }
 
     if(!Type.empty()){
       for(int j=0; j < 8; j++){
@@ -682,9 +701,11 @@ bool SimpleWFAna::initialize() {
     delete h_UYHITS;
     h_VYHITS->Write();
     delete h_VYHITS;
+    // Write hitograms of neutrino type energy distributions before and after cut
     if(!TypeEnergyBef.empty()){
         for(int i=0;i<8;i++){
            h_TempHisto = new TH1D(StrArray[i].c_str(),"",50,0,10);
+           // Loop over multimap of type and energy and find type, fill hist with energy and delete entry
            for(auto it=TypeEnergyBef.begin(); it!=TypeEnergyBef.end();){
              if((*it).first==i){
                h_TempHisto->Fill((*it).second);
@@ -721,34 +742,39 @@ bool SimpleWFAna::initialize() {
     myfile.open (tName);
 
     if(option==1){
-    myfile<<"The average number of hits was: "<<avHN<<" +/- "<<stDev<<std::endl;
-    myfile<<"The average number of U hits was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-    myfile<<"The average number of V hits was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-    myfile<<"The average number of Y hits was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+        myfile<<"The average number of hits was: "<<avHN<<" +/- "<<stDev<<std::endl;
+        myfile<<"The average number of U hits was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+        myfile<<"The average number of V hits was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+        myfile<<"The average number of Y hits was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+    }
 
     if(option==2){
-    myfile<<"The average TDC standard deviation was: "<<avHN<<" +/- "<<stDev<<std::endl;
-    myfile<<"The average U TDC standard deviation was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-    myfile<<"The average V TDC standard deviation was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-    myfile<<"The average Y TDC standard deviation was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+        myfile<<"The average TDC standard deviation was: "<<avHN<<" +/- "<<stDev<<std::endl;
+        myfile<<"The average U TDC standard deviation was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+        myfile<<"The average V TDC standard deviation was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+        myfile<<"The average Y TDC standard deviation was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+    }
 
     if(option==3){
-    myfile<<"The average ADC amplitude was: "<<avHN<<" +/- "<<stDev<<std::endl;
-    myfile<<"The average U ADC amplitude was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-    myfile<<"The average V ADC amplitude was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-    myfile<<"The average Y ADC amplitude was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+        myfile<<"The average ADC amplitude was: "<<avHN<<" +/- "<<stDev<<std::endl;
+        myfile<<"The average U ADC amplitude was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+        myfile<<"The average V ADC amplitude was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+        myfile<<"The average Y ADC amplitude was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+    }
 
     if(option==4){
-    myfile<<"The average integrated charge was: "<<avHN<<" +/- "<<stDev<<std::endl;
-    myfile<<"The average U integrated charge was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-    myfile<<"The average V integrated charge was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-    myfile<<"The average Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+        myfile<<"The average integrated charge was: "<<avHN<<" +/- "<<stDev<<std::endl;
+        myfile<<"The average U integrated charge was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+        myfile<<"The average V integrated charge was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+        myfile<<"The average Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+    }
 
     if(option==5){
-    myfile<<"The average TDC interquartile range was: "<<avHN<<" +/- "<<stDev<<std::endl;
-    myfile<<"The average U interquartile range was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-    myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-    myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stDevy<<std::endl;}
+        myfile<<"The average TDC interquartile range was: "<<avHN<<" +/- "<<stDev<<std::endl;
+        myfile<<"The average U interquartile range was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
+        myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
+        myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+    }
 
     int size = hitNo.size()/100;
 
@@ -778,7 +804,7 @@ bool SimpleWFAna::initialize() {
 
     myfile.close();
 
-    eventNo.clear(); hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
+    hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
     NeutrinoTypeNo.clear(); Removedu.clear(); Removedv.clear(); Removedy.clear(); 
     Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); Removeduvy.clear(); RemovedType.clear(); 
 
