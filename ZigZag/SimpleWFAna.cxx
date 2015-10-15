@@ -292,7 +292,7 @@ bool SimpleWFAna::initialize() {
     yHit = 0;
 
 // ****** CUT ON INTEGRATED WAVEFORMS ****** //
-    if(option==4){
+    if(option==4||comoption==4){
         // Initialize integration counter for event
         intADC = 0;
         UintADC = 0;
@@ -301,7 +301,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON TDC SPREAD ****** //
-    if(option==2||option==5){
+    if(option==2||option==5||comoption==2){
         // Clear TDC vectors
         TDCvec.clear();
         UTDCvec.clear();
@@ -310,7 +310,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
-    if(option==3){
+    if(option==3||comoption==3){
         // Clear ADC vectors
         ADCvec.clear();
         UADCvec.clear();
@@ -349,7 +349,7 @@ bool SimpleWFAna::initialize() {
         if(i>=4800&&i<8256){yHit = yHit + hitPerWire(adcs,T,offset);}
 
 // ****** CUT ON INTEGRATED WAVEFORMS ****** //
-    if(option==4){
+    if(option==4||comoption==4){
         // Loop over TDC time
         for(size_t j=0;j<adcs.size()-1;++j){
             // Get offset adjusted modulus of two points
@@ -366,7 +366,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON TDC SPREAD ****** //
-    if(option==2||option==5){
+    if(option==2||option==5||comoption==2){
         // Get TDCs of hits and sort into planes
         std::vector<int> v_TDCs = hitTDC(adcs,T,offset);
         for (size_t f=0; f<v_TDCs.size(); ++f) {
@@ -378,7 +378,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
-    if(option==3){
+    if(option==3||comoption==3){
         // Get ADC amplitudes of hits and sort into planes
         std::vector<double> v_ADCamp = ADCamp(adcs,T,offset);
         for (size_t f=0; f<v_ADCamp.size(); ++f) {
@@ -400,7 +400,7 @@ bool SimpleWFAna::initialize() {
   }
 
 // ****** CUT ON TDC STANDARD DEVIATION ****** //
-    if(option==2){
+    if(option==2||comoption==2){
         // Calculate standard deviations of TDCs of hits in each plane
         stdTDC = TDCstd(TDCvec);
         UstdTDC = TDCstd(UTDCvec);
@@ -414,7 +414,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON TDC INTERQUARTILE RANGE ****** //
-    if(option==5){
+    if(option==5||comoption==3){
         // If there are no hits set interquartile range to zero else calculte normally
         if(_isHit!=0){iqrTDC = TDCiqr(TDCvec,_isHit);}else{iqrTDC=0;}
         if(uHit!=0){UiqrTDC = TDCiqr(UTDCvec,uHit);}else{UiqrTDC=0;}
@@ -423,7 +423,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON ADC AMPLITUDE ******* //
-    if(option==3){
+    if(option==3||comoption==3){
         // Calculate mean and standard deviation of amplitudes
         if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
         if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = ampStd(UADCvec,UMampADC);}else{UMampADC=0;USDampADC=0;}
@@ -447,17 +447,35 @@ bool SimpleWFAna::initialize() {
         vhitNo.push_back(VstdTDC);
         yhitNo.push_back(YstdTDC);
     }
+    if(comoption==2){
+        chitNo.push_back(stdTDC);
+        cuhitNo.push_back(UstdTDC);
+        cvhitNo.push_back(VstdTDC);
+        cyhitNo.push_back(YstdTDC);
+    }
     if(option==3){
         hitNo.push_back(MampADC);
         uhitNo.push_back(UMampADC);
         vhitNo.push_back(VMampADC);
         yhitNo.push_back(YMampADC);
     }
+    if(comoption==3){
+        chitNo.push_back(MampADC);
+        cuhitNo.push_back(UMampADC);
+        cvhitNo.push_back(VMampADC);
+        cyhitNo.push_back(YMampADC);
+    }
     if(option==4){
         hitNo.push_back(intADC);
         uhitNo.push_back(UintADC);
         vhitNo.push_back(VintADC);
         yhitNo.push_back(YintADC);
+    }
+    if(comoption==4){
+        chitNo.push_back(intADC);
+        cuhitNo.push_back(UintADC);
+        cvhitNo.push_back(VintADC);
+        cyhitNo.push_back(YintADC);
     }
     if(option==5){
         hitNo.push_back(iqrTDC);
@@ -524,7 +542,7 @@ bool SimpleWFAna::initialize() {
 
     // Count number of removed events outside of some tolerance of hit wires
     // Total cut
-    if(hitNo[en]>Tmax||hitNo[en]<Tmin){
+    if(hitNo[en]>Tmax||hitNo[en]<Tmin||chitNo[en]>cTmax||chitNo[en]<cTmin){
       RemovedType[0] ++;
       if(!Type.empty()){
         for(int j=0; j < 8; j ++){
@@ -534,7 +552,7 @@ bool SimpleWFAna::initialize() {
     }
 
     // Cut on U plane
-    if(uhitNo[en]>Umax||uhitNo[en]<Umin){
+    if(uhitNo[en]>Umax||uhitNo[en]<Umin||cuhitNo[en]>cUmax||cuhitNo[en]<cUmin){
       Removedu[0] ++;
       if(!Type.empty()){
         for(int j=0; j < 8; j++){
@@ -549,7 +567,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on V plane
-    if(vhitNo[en]>Vmax||vhitNo[en]<Vmin){
+    if(vhitNo[en]>Vmax||vhitNo[en]<Vmin||cvhitNo[en]>cVmax||cvhitNo[en]<cVmin){
       Removedv[0] ++;
       if(!Type.empty()){
         for(int j=0; j < 8; j++){
@@ -564,7 +582,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on Y plane
-    if(yhitNo[en]>Ymax||yhitNo[en]<Ymin){
+    if(yhitNo[en]>Ymax||yhitNo[en]<Ymin||cyhitNo[en]>cYmax||cyhitNo[en]<cYmin){
       Removedy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
@@ -579,7 +597,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on U and V planes also fill cutting histograms
-    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)||(cuhitNo[en]>cUmax||cuhitNo[en]<cUmin)||(cvhitNo[en]>cVmax||cvhitNo[en]<cVmin)){
       Removeduv[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
@@ -594,7 +612,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on U and Y planes
-    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)){
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(cuhitNo[en]>cUmax||cuhitNo[en]<cUmin)||(cyhitNo[en]>cYmax||cyhitNo[en]<cYmin)){
       Removeduy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
@@ -609,7 +627,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on V and Y planes
-    if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+    if((yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)||(cyhitNo[en]>cYmax||cyhitNo[en]<cYmin)||(cvhitNo[en]>cVmax||cvhitNo[en]<cVmin)){
       Removedvy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
@@ -624,7 +642,7 @@ bool SimpleWFAna::initialize() {
       }}
 
     // Cut on U, V and Y planes
-    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(vhitNo[en]>Vmax||vhitNo[en]<Vmin)){
+    if((uhitNo[en]>Umax||uhitNo[en]<Umin)||(yhitNo[en]>Ymax||yhitNo[en]<Ymin)||(cvhitNo[en]>cVmax||cvhitNo[en]<cVmin)||(cuhitNo[en]>cUmax||cuhitNo[en]<cUmin)||(cyhitNo[en]>cYmax||cyhitNo[en]<cYmin)||(cvhitNo[en]>cVmax||cvhitNo[en]<cVmin)){
       Removeduvy[0] ++;
       if(!Type.empty()){
         for(int j=0; j<8;j++){
@@ -677,6 +695,25 @@ bool SimpleWFAna::initialize() {
       if(vhitNo[k]>Vmax){Vmax = vhitNo[k];}
       if(yhitNo[k]<Ymin){Ymin = yhitNo[k];}
       if(yhitNo[k]>Ymax){Ymax = yhitNo[k];}
+    }
+
+    cTmin = chitNo[0];
+    cTmax = chitNo[0];
+    cUmin = cuhitNo[0];
+    cUmax = cuhitNo[0];
+    cVmin = cvhitNo[0];
+    cVmax = cvhitNo[0];
+    cYmin = cyhitNo[0];
+    cYmax = cyhitNo[0];
+    for(unsigned int k=0; k<chitNo.size(); ++k){
+      if(chitNo[k]<cTmin){cTmin = chitNo[k];}
+      if(chitNo[k]>cTmax){cTmax = chitNo[k];}
+      if(cuhitNo[k]<cUmin){cUmin = cuhitNo[k];}
+      if(cuhitNo[k]>cUmax){cUmax = cuhitNo[k];}
+      if(cvhitNo[k]<cVmin){cVmin = cvhitNo[k];}
+      if(cvhitNo[k]>cVmax){cVmax = cvhitNo[k];}
+      if(cyhitNo[k]<cYmin){cYmin = cyhitNo[k];}
+      if(cyhitNo[k]>cYmax){cYmax = cyhitNo[k];}
     }
 
     // Get file names from python script
@@ -805,6 +842,7 @@ bool SimpleWFAna::initialize() {
     myfile.close();
 
     hitNo.clear(), uhitNo.clear(), vhitNo.clear(), yhitNo.clear();
+    chitNo.clear(), cuhitNo.clear(), cvhitNo.clear(), cyhitNo.clear();
     NeutrinoTypeNo.clear(); Removedu.clear(); Removedv.clear(); Removedy.clear(); 
     Removeduv.clear(); Removeduy.clear(); Removedvy.clear(); Removeduvy.clear(); RemovedType.clear(); 
 

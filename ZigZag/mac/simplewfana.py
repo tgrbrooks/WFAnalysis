@@ -30,24 +30,39 @@ while True:
                 print('Must be an integer between 1 and 7')
 """
 plane = 4
-for y in range (0,4):
+for y in range (0,6):
 	if y == 0:
 		option = 1
+		comoption = 2
 		op_name = "HitNum"
+		com_name = "TDCstd"
 	if y == 1:
-		option = 2
-		op_name = "TDCstd"
+		option = 1
+		comoption = 3
+		op_name = "HitNum"
+		com_name = "ADCamp"
 	if y == 2:
-		option = 3
-		op_name = "ADCamp"
+		option = 1
+		comoption = 4
+		op_name = "HitNum"
+		com_name = "WFint"
 	if y == 3:
-		option = 4
-		op_name = "WFint"
+		option = 2
+		comoption = 3
+		op_name = "TDCstd"
+		com_name = "ADCamp"
 	if y == 4:
-		option = 5
-		op_name = "TDCiqr"
+		option = 2
+		comoption = 4
+		op_name = "TDCstd"
+		com_name = "WFint"
+	if y == 5:
+		option = 3
+		comoption = 4
+		op_name = "ADCamp"
+		com_name = "WFint"
 	# Loop over different tolerances changing file names each time
-	for x in range (0,6):
+	for x in range (3,4):
 		if x == 0:
 			T = 4
 			fname = op_name+"-nnbar4.root"
@@ -77,10 +92,10 @@ for y in range (0,4):
                         print
 		if x == 3:
 			T = 10
-			fname = op_name+"-nnbar10.root"
-			fname1 = op_name+"-numi10.root"
-			tname = op_name+"-nnbar10.txt"
-			tname1 = op_name+"-numi10.txt"
+			fname = op_name+"+"+com_name+"-nnbar10.root"
+			fname1 = op_name+"+"+com_name+"-numi10.root"
+			tname = op_name+"+"+com_name+"-nnbar10.txt"
+			tname1 = op_name+"+"+com_name+"-numi10.txt"
                         print
                         print(op_name+", T = "+str(T))
                         print
@@ -112,7 +127,7 @@ for y in range (0,4):
 		# Specify IO mode
 		my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 	
-		ana_unit = fmwk.SimpleWFAna(T,fname,tname,option,plane)
+		ana_unit = fmwk.SimpleWFAna(T,fname,tname,option,plane,comoption)
 	
 		my_proc.add_process(ana_unit)
 	
@@ -131,6 +146,15 @@ for y in range (0,4):
 		v_max = ana_unit.GetVmax()
 		y_min = ana_unit.GetYmin()
 		y_max = ana_unit.GetYmax()
+
+		ct_min = ana_unit.GetcTmin()
+		ct_max = ana_unit.GetcTmax()
+		cu_min = ana_unit.GetcUmin()
+		cu_max = ana_unit.GetcUmax()
+		cv_min = ana_unit.GetcVmin()
+		cv_max = ana_unit.GetcVmax()
+		cy_min = ana_unit.GetcYmin()
+		cy_max = ana_unit.GetcYmax()
 		# done!
 		print 
 		print "Finished running ana_processor event loop!"
@@ -145,7 +169,7 @@ for y in range (0,4):
 		# Specify IO mode
 		my_proc1.set_io_mode(fmwk.storage_manager.kREAD)
 
-		ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt",option,plane)
+		ana_unit1 = fmwk.SimpleWFAna(T,"delete.root","delete.txt",option,plane,comoption)
 
 		my_proc1.add_process(ana_unit1)
 
@@ -173,7 +197,7 @@ for y in range (0,4):
 		# Specify IO mode
 		my_proc2.set_io_mode(fmwk.storage_manager.kREAD)
 	
-		ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1,option,plane)
+		ana_unit2 = fmwk.SimpleWFAna(T,fname1,tname1,option,plane,comoption)
 	
 		# Set cut limits, interaction types and neutrino energies
 		ana_unit2.SetTmin(t_min)
@@ -184,6 +208,16 @@ for y in range (0,4):
 		ana_unit2.SetVmax(v_max)
 		ana_unit2.SetYmin(y_min)
 		ana_unit2.SetYmax(y_max)
+
+		ana_unit2.SetcTmin(ct_min)
+		ana_unit2.SetcTmax(ct_max)
+		ana_unit2.SetcUmin(cu_min)
+		ana_unit2.SetcUmax(cu_max)
+		ana_unit2.SetcVmin(cv_min)
+		ana_unit2.SetcVmax(cv_max)
+		ana_unit2.SetcYmin(cy_min)
+		ana_unit2.SetcYmax(cy_max)
+
 		ana_unit2.SetType(typ)
 		ana_unit2.SetQsq(qsq)
 	

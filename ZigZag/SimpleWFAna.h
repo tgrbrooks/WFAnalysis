@@ -98,6 +98,8 @@ namespace larlite {
     std::vector<int> eventNo;
     // array of number of hits
     std::vector<double> hitNo, uhitNo, vhitNo, yhitNo;
+    // array of number of hits
+    std::vector<double> chitNo, cuhitNo, cvhitNo, cyhitNo;
     // array of standard deviations
     std::vector<double> sDev, usDev, vsDev, ysDev;
     // vector of interaction types
@@ -111,6 +113,7 @@ namespace larlite {
     std::string fnm;
     // cut limits to be set
     double Tmin, Tmax, Umin, Umax, Vmin, Vmax, Ymin, Ymax; 
+    double cTmin, cTmax, cUmin, cUmax, cVmin, cVmax, cYmin, cYmax;
 
     // Vectors for TDC times of hits
     std::vector<int> TDCvec, UTDCvec, VTDCvec, YTDCvec;
@@ -120,6 +123,7 @@ namespace larlite {
     int truthflag;
 
     int option;
+    int comoption;
     int plane;
 
     std::multimap<int,double> TypeEnergy;
@@ -128,7 +132,7 @@ namespace larlite {
   public:
 
     /// Default constructor
-    SimpleWFAna(double T,std::string name,std::string fname,int op,int pln) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op;plane=pln; };
+    SimpleWFAna(double T,std::string name,std::string fname,int op,int pln,int cop) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op;plane=pln;comoption=cop; };
 
     /// Default destructor
     virtual ~SimpleWFAna(){};
@@ -208,6 +212,56 @@ namespace larlite {
     void SetYmax(double y_max) {
       Ymax = y_max;
     }
+
+    double GetcTmin() {
+      return cTmin;
+    }
+    void SetcTmin(double ct_min) {
+      cTmin = ct_min;
+    }
+    double GetcTmax() {
+      return cTmax;
+    }
+    void SetcTmax(double ct_max) {
+      Tmax = ct_max;
+    }
+    double GetcUmin() {
+      return cUmin;
+    }
+    void SetcUmin(double cu_min) {
+      cUmin = cu_min;
+    }
+    double GetcUmax() {
+      return cUmax;
+    }
+    void SetcUmax(double cu_max) {
+      cUmax = cu_max;
+    }
+    double GetcVmin() {
+      return cVmin;
+    }
+    void SetcVmin(double cv_min) {
+      cVmin = cv_min;
+    }
+    double GetcVmax() {
+      return cVmax;
+    }
+    void SetcVmax(double cv_max) {
+      cVmax = cv_max;
+    }
+    double GetcYmin() {
+      return cYmin;
+    }
+    void SetcYmin(double cy_min) {
+      cYmin = cy_min;
+    }
+    double GetcYmax() {
+      return cYmax;
+    }
+    void SetcYmax(double cy_max) {
+      cYmax = cy_max;
+    }
+
     // Accessor and mutator function for interaction type
     std::vector<int> GetType() {
       return Type;
