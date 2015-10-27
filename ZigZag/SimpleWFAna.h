@@ -223,7 +223,7 @@ namespace larlite {
       return cTmax;
     }
     void SetcTmax(double ct_max) {
-      Tmax = ct_max;
+      cTmax = ct_max;
     }
     double GetcUmin() {
       return cUmin;

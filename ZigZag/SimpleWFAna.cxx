@@ -178,9 +178,9 @@ double ampMean(std::vector<double> ADCvec) {
 // Print to text file
 void PrintText(std::ofstream& fileptr, const std::vector<int>& removedno, const std::vector<int>& nutypeno,int size) {
     fileptr<<removedno[0]/size<<"% Total, "<<removedno[1]<<"/"<<nutypeno[0]<<" CCQE, "
-    <<removedno[2]<<"/"<<nutypeno[4]<<" NCQE, "<<removedno[3]<<"/"<<nutypeno[1]<<" CCRE, "
-    <<removedno[4]<<"/"<<nutypeno[5]<<" NCRE, "<<removedno[5]<<"/"<<nutypeno[2]<<" CCDIS, "
-    <<removedno[6]<<"/"<<nutypeno[6]<<" NCDIS, "<<removedno[7]<<"/"<<nutypeno[3]<<" CCCO, "
+    <<removedno[2]<<"/"<<nutypeno[1]<<" NCQE, "<<removedno[3]<<"/"<<nutypeno[2]<<" CCRE, "
+    <<removedno[4]<<"/"<<nutypeno[3]<<" NCRE, "<<removedno[5]<<"/"<<nutypeno[4]<<" CCDIS, "
+    <<removedno[6]<<"/"<<nutypeno[5]<<" NCDIS, "<<removedno[7]<<"/"<<nutypeno[6]<<" CCCO, "
     <<removedno[8]<<"/"<<nutypeno[7]<<" NCCO"<<std::endl<<std::endl;
 }
 
@@ -318,26 +318,22 @@ bool SimpleWFAna::initialize() {
         YADCvec.clear();
     }
 
-    double offset = 0;
-    double T = 0;
-
     // Loop over all wires in event
     for (size_t i=0; i < wfs->size(); i++){
         // get waveform from wire i
         auto const& wf = (*wfs).at(i);
         // Convert from analogue to digital
         auto const& adcs = wf.ADCs();
-        if (i==0){
-            // Calculate Mean
-            for(size_t j=0; j<adcs.size(); ++j)
-              _mean += adcs[j];
-            _mean /= ((float)adcs.size());
 
-            // Calculate offset from mean
-            offset = static_cast<double>(_mean);
-            // Get tolerance from python script
-            T = SimpleWFAna::GetT();
-        }
+        // Calculate Mean
+        for(size_t j=0; j<adcs.size(); ++j)
+          _mean += adcs[j];
+        _mean /= ((float)adcs.size());
+
+        // Calculate offset from mean
+        double offset = static_cast<double>(_mean);
+        // Get tolerance from python script
+        double T = SimpleWFAna::GetT();
 
         // Calculate total number of hits
         // Add to hit counter for event
@@ -414,7 +410,7 @@ bool SimpleWFAna::initialize() {
     }
 
 // ****** CUT ON TDC INTERQUARTILE RANGE ****** //
-    if(option==5||comoption==3){
+    if(option==5){
         // If there are no hits set interquartile range to zero else calculte normally
         if(_isHit!=0){iqrTDC = TDCiqr(TDCvec,_isHit);}else{iqrTDC=0;}
         if(uHit!=0){UiqrTDC = TDCiqr(UTDCvec,uHit);}else{UiqrTDC=0;}

@@ -30,7 +30,7 @@ while True:
                 print('Must be an integer between 1 and 7')
 """
 plane = 4
-for y in range (0,6):
+for y in range (2,6):
 	if y == 0:
 		option = 1
 		comoption = 2
