@@ -8,7 +8,7 @@ namespace larlite {
 // ---- LOCAL FUNCTIONS ---- //
 
 // Function to draw digital waveforms
-void drawWF( const std::vector<short int> ad, int size, double offset ) {
+void drawWF( std::vector<short int> const & ad, int size, double offset ) {
     // Variables to draw on graph
     size = 300;
     double x[size], y[size];
@@ -36,7 +36,7 @@ void drawWF( const std::vector<short int> ad, int size, double offset ) {
 }
 
 // Function to determine of wire is hit or not
-int hitCount(const std::vector<short int> adcs, double T, double offset) {
+int hitCount(std::vector<short int> const & adcs, double T, double offset) {
     int flag = 0;
     size_t l = 0;
     int hit = 0;
@@ -53,7 +53,7 @@ int hitCount(const std::vector<short int> adcs, double T, double offset) {
 }
 
 // Function that calculates number of hits on a wire assuming the beginning of one hit and end of another are separated by 150 TDCs
-int hitPerWire(const std::vector<short int> adcs, double T, double offset) {
+int hitPerWire(std::vector<short int> const & adcs, double T, double offset) {
     size_t l = 0;
     int hit = 0;
     // Determine if wire is hit or not
@@ -71,7 +71,7 @@ int hitPerWire(const std::vector<short int> adcs, double T, double offset) {
 }
 
 // Function that returns the TDC of the start of each hit
-std::vector<int> hitTDC(const std::vector<short int> adcs, double T, double offset) {
+std::vector<int> hitTDC(std::vector<short int> const & adcs, double T, double offset) {
     // Initialize TDC variable and vector to store
     size_t l = 0;
     std::vector<int> v_TDCs;
@@ -90,19 +90,19 @@ std::vector<int> hitTDC(const std::vector<short int> adcs, double T, double offs
 }
 
 // Function that returns maximum height of each hit in ADC units
-std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double offset) {
+std::vector<double> ADCamp(std::vector<short int> const & adcs, double T, double offset) {
     size_t l = 0;
     std::vector<double> v_ADCamp;
     double max = 0;
     // Determine if wire is hit or not
     while(l<adcs.size()){
-	double y =pow(pow(adcs[l]-offset,2),0.5);
+	double y = abs(adcs[l]-offset);
         if((y)>T){
             // If threshold is passed set max as this point
             max = y;
             // Loop over max size of peak and find the most extremal point
             for(size_t i = 1;i<150;i++){
-                double yp = pow(pow(adcs[l+i]-offset,2),0.5);
+                double yp = abs(adcs[l+i]-offset);
                 if(yp>max){
 	            max = yp;
                 }
@@ -117,28 +117,18 @@ std::vector<double> ADCamp(const std::vector<short int> adcs, double T, double o
 }
 
 // Function to return standard error
-double WireSTD(std::vector<double> hitNo, double avHN) {
-    // Calculate standard error on the mean in number of hits
-    double stDev = 0;
-    for(int k=0; k<100; ++k)
-    stDev += (hitNo[k]-avHN)*(hitNo[k]-avHN);
-    stDev = sqrt( stDev /(100*99));
-    return stDev;
-}
-
-// calculate standard deviation of amplitude
-
-double ampStd(std::vector<double> ADCvec,double meanADC) {
-    // calculate standard deviation
-    double stdADC(0);
-    for(size_t k=0; k<ADCvec.size(); ++k)
-      stdADC += (ADCvec[k]-meanADC)*(ADCvec[k]-meanADC);
-    stdADC = sqrt( stdADC / ((double)ADCvec.size()));
-    return stdADC;
+double StandErr(std::vector<double> const & cutVar, double avrg) {
+    // Calculate standard error on the mean 
+    double stErr = 0;
+    for(size_t k=0; k<cutVar.size(); ++k)
+    stErr += (cutVar[k]-avrg)*(cutVar[k]-avrg);
+    stErr = sqrt( stErr / (cutVar.size()-1) );
+    stErr = stErr/sqrt(cutVar.size());
+    return stErr;
 }
 
 // Function to return standard deviation of TDC
-float TDCstd(std::vector<int> TDCvec) {
+float TDCstd(std::vector<int> const & TDCvec) {
     // Calculate mean
     float stdTDC(0);
     float meanTDC(0);
@@ -165,7 +155,7 @@ int TDCiqr(std::vector<int> TDCvec, int hitNo) {
 }
 
 // calculate mean ADC amplitude
-double ampMean(std::vector<double> ADCvec) {
+double ampMean(std::vector<double> const & ADCvec) {
     // calculate mean
     double meanADC(0);
     for(size_t f=0; f<ADCvec.size(); ++f) {
@@ -176,7 +166,7 @@ double ampMean(std::vector<double> ADCvec) {
 }
 
 // Print to text file
-void PrintText(std::ofstream& fileptr, const std::vector<int>& removedno, const std::vector<int>& nutypeno,int size) {
+void PrintText(std::ofstream & fileptr, std::vector<int> const & removedno, std::vector<int> const & nutypeno,int size) {
     fileptr<<removedno[0]/size<<"% Total, "<<removedno[1]<<"/"<<nutypeno[0]<<" CCQE, "
     <<removedno[2]<<"/"<<nutypeno[4]<<" NCQE, "<<removedno[3]<<"/"<<nutypeno[1]<<" CCRE, "
     <<removedno[4]<<"/"<<nutypeno[5]<<" NCRE, "<<removedno[5]<<"/"<<nutypeno[2]<<" CCDIS, "
@@ -192,6 +182,12 @@ bool SimpleWFAna::initialize() {
     // Set event number to 0
     _evtN = 0;
     TH1::AddDirectory(kFALSE);
+
+    // Initialize total time counters
+    timeTav = 0; clockTav = 0;
+    timeGetav = 0; clockGetav = 0;
+    timeCutav = 0; clockCutav = 0;
+    timeFillav = 0; clockFillav = 0;
 
     // ****** UNCOMMENT TO DRAW WAVEFORMS ****** //
     /*// Ask for event and wire number to display graph of digital waveform
@@ -244,7 +240,13 @@ bool SimpleWFAna::initialize() {
   
   // Called for every event
   bool SimpleWFAna::analyze(storage_manager* storage) {
-    
+
+    // Create initial total time and getting data time using both clock() and time()
+    time_t timeT = time(NULL);
+    time_t timeGet = time(NULL);
+    clock_t clockT = clock();
+    clock_t clockGet = clock();
+  
     // Set flag for mctruth info to 0
     int truthflag = 0;
     // Get mctruth data
@@ -284,7 +286,13 @@ bool SimpleWFAna::initialize() {
     	print (msg::kERROR,__FUNCTION__,"RawDigit data product not found!");
     	return false;
     }
- 
+
+    timeGet = time(NULL) - timeGet;
+    clockGet = clock() - clockGet;
+    // Create initial cut times
+    time_t timeCut = time(NULL);
+    clock_t clockCut = clock();
+
     // Initialize hit counter for event
     _isHit = 0;
     uHit = 0;
@@ -327,17 +335,15 @@ bool SimpleWFAna::initialize() {
         auto const& wf = (*wfs).at(i);
         // Convert from analogue to digital
         auto const& adcs = wf.ADCs();
-        if (i==0){
-            // Calculate Mean
-            for(size_t j=0; j<adcs.size(); ++j)
-              _mean += adcs[j];
-            _mean /= ((float)adcs.size());
+        // Calculate Mean
+        for(size_t j=0; j<adcs.size(); ++j)
+          _mean += adcs[j];
+        _mean /= ((float)adcs.size());
 
-            // Calculate offset from mean
-            offset = static_cast<double>(_mean);
-            // Get tolerance from python script
-            T = SimpleWFAna::GetT();
-        }
+        // Calculate offset from mean
+        offset = static_cast<double>(_mean);
+        // Get tolerance from python script
+        T = SimpleWFAna::GetT();
 
         // Calculate total number of hits
         // Add to hit counter for event
@@ -353,8 +359,8 @@ bool SimpleWFAna::initialize() {
         // Loop over TDC time
         for(size_t j=0;j<adcs.size()-1;++j){
             // Get offset adjusted modulus of two points
-            double x1 = pow(pow(adcs[j]-offset,2),0.5);
-            double x2 = pow(pow(adcs[j+1]-offset,2),0.5);
+            double x1 = abs(adcs[j]-offset);
+            double x2 = abs(adcs[j+1]-offset);
             // If both above tolerance add up area between them
             if(x1>T&&x2>T){
                 intADC = intADC + 0.5*x1 + 0.5*x2;
@@ -424,12 +430,18 @@ bool SimpleWFAna::initialize() {
 
 // ****** CUT ON ADC AMPLITUDE ******* //
     if(option==3){
-        // Calculate mean and standard deviation of amplitudes
-        if(_isHit!=0){MampADC = ampMean(ADCvec);SDampADC = ampStd(ADCvec,MampADC);}else{MampADC=0;SDampADC=0;}
-        if(uHit!=0){UMampADC = ampMean(UADCvec);USDampADC = ampStd(UADCvec,UMampADC);}else{UMampADC=0;USDampADC=0;}
-        if(vHit!=0){VMampADC = ampMean(VADCvec);VSDampADC = ampStd(VADCvec,VMampADC);}else{VMampADC=0;VSDampADC=0;}
-        if(yHit!=0){YMampADC = ampMean(YADCvec);YSDampADC = ampStd(YADCvec,YMampADC);}else{YMampADC=0;YSDampADC=0;}
+        // Calculate mean of amplitudes
+        if(_isHit!=0){MampADC = ampMean(ADCvec);}else{MampADC=0;}
+        if(uHit!=0){UMampADC = ampMean(UADCvec);}else{UMampADC=0;}
+        if(vHit!=0){VMampADC = ampMean(VADCvec);}else{VMampADC=0;}
+        if(yHit!=0){YMampADC = ampMean(YADCvec);}else{YMampADC=0;}
     }
+
+    timeCut = time(NULL) - timeCut;
+    clockCut = clock() - clockCut;
+    // Create initial histogram filling end event removal time
+    time_t timeFill = time(NULL);
+    clock_t clockFill = clock();
 
     int en = _evtN;
 
@@ -638,6 +650,20 @@ bool SimpleWFAna::initialize() {
         }
       }}
 
+    timeFill = time(NULL) - timeFill;
+    timeT = time(NULL) - timeT;
+    clockFill = clock() - clockFill;
+    clockT = clock() - clockT;
+    // Increment total time counters in seconds
+    timeTav += (float)timeT;
+    timeGetav += (float)timeGet;
+    timeCutav += (float)timeCut;
+    timeFillav += (float)timeFill;
+    clockTav += ((float)clockT)/CLOCKS_PER_SEC;
+    clockGetav += ((float)clockGet)/CLOCKS_PER_SEC;
+    clockCutav += ((float)clockCut)/CLOCKS_PER_SEC;
+    clockFillav += ((float)clockFill)/CLOCKS_PER_SEC;
+
     _evtN += 1;
     return true;
   }
@@ -713,12 +739,14 @@ bool SimpleWFAna::initialize() {
              } else {++it;}
            }
            h_nCutTempHisto = new TH1D(nCutStrArray[i].c_str(),"",50,0,10);
+           // Do same for neutrinos that survived the cut
            for(auto it2=TypeEnergy.begin(); it2!=TypeEnergy.end();){
              if((*it2).first==i){
                h_nCutTempHisto->Fill((*it2).second);
                it2 = TypeEnergy.erase(it2);
              } else {++it2;}
            }
+           // Clean up
            h_TempHisto->Write();
            h_nCutTempHisto->Write();
            delete h_TempHisto;
@@ -729,52 +757,55 @@ bool SimpleWFAna::initialize() {
 
     // Calculate averages and standard deviations
     double avHN = ampMean(hitNo);
-    double stDev = WireSTD(hitNo,avHN);
+    double stErr = StandErr(hitNo,avHN);
     double avHNu = ampMean(uhitNo);
-    double stDevu = WireSTD(uhitNo,avHNu);
+    double stErru = StandErr(uhitNo,avHNu);
     double avHNv = ampMean(vhitNo);
-    double stDevv = WireSTD(vhitNo,avHNv);
+    double stErrv = StandErr(vhitNo,avHNv);
     double avHNy = ampMean(yhitNo);
-    double stDevy = WireSTD(yhitNo,avHNy);
+    double stErry = StandErr(yhitNo,avHNy);
 
     // Write results to a .txt file
     std::ofstream myfile;
     myfile.open (tName);
 
     if(option==1){
-        myfile<<"The average number of hits was: "<<avHN<<" +/- "<<stDev<<std::endl;
-        myfile<<"The average number of U hits was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-        myfile<<"The average number of V hits was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-        myfile<<"The average number of Y hits was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+        myfile<<"The average number of hits was: "<<avHN<<" +/- "<<stErr<<std::endl;
+        myfile<<"The average number of U hits was: "<<avHNu<<" +/- "<<stErru<<std::endl;
+        myfile<<"The average number of V hits was: "<<avHNv<<" +/- "<<stErrv<<std::endl;
+        myfile<<"The average number of Y hits was: "<<avHNy<<" +/- "<<stErry<<std::endl;
     }
 
     if(option==2){
-        myfile<<"The average TDC standard deviation was: "<<avHN<<" +/- "<<stDev<<std::endl;
-        myfile<<"The average U TDC standard deviation was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-        myfile<<"The average V TDC standard deviation was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-        myfile<<"The average Y TDC standard deviation was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+        myfile<<"The average TDC standard deviation was: "<<avHN<<" +/- "<<stErr<<std::endl;
+        myfile<<"The average U TDC standard deviation was: "<<avHNu<<" +/- "<<stErru<<std::endl;
+        myfile<<"The average V TDC standard deviation was: "<<avHNv<<" +/- "<<stErrv<<std::endl;
+        myfile<<"The average Y TDC standard deviation was: "<<avHNy<<" +/- "<<stErry<<std::endl;
     }
 
     if(option==3){
-        myfile<<"The average ADC amplitude was: "<<avHN<<" +/- "<<stDev<<std::endl;
-        myfile<<"The average U ADC amplitude was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-        myfile<<"The average V ADC amplitude was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-        myfile<<"The average Y ADC amplitude was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+        myfile<<"The average ADC amplitude was: "<<avHN<<" +/- "<<stErr<<std::endl;
+        myfile<<"The average U ADC amplitude was: "<<avHNu<<" +/- "<<stErru<<std::endl;
+        myfile<<"The average V ADC amplitude was: "<<avHNv<<" +/- "<<stErrv<<std::endl;
+        myfile<<"The average Y ADC amplitude was: "<<avHNy<<" +/- "<<stErry<<std::endl;
     }
 
     if(option==4){
-        myfile<<"The average integrated charge was: "<<avHN<<" +/- "<<stDev<<std::endl;
-        myfile<<"The average U integrated charge was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-        myfile<<"The average V integrated charge was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-        myfile<<"The average Y integrated charge was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+        myfile<<"The average integrated charge was: "<<avHN<<" +/- "<<stErr<<std::endl;
+        myfile<<"The average U integrated charge was: "<<avHNu<<" +/- "<<stErru<<std::endl;
+        myfile<<"The average V integrated charge was: "<<avHNv<<" +/- "<<stErrv<<std::endl;
+        myfile<<"The average Y integrated charge was: "<<avHNy<<" +/- "<<stErry<<std::endl;
     }
 
     if(option==5){
-        myfile<<"The average TDC interquartile range was: "<<avHN<<" +/- "<<stDev<<std::endl;
-        myfile<<"The average U interquartile range was: "<<avHNu<<" +/- "<<stDevu<<std::endl;
-        myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stDevv<<std::endl;
-        myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stDevy<<std::endl;
+        myfile<<"The average TDC interquartile range was: "<<avHN<<" +/- "<<stErr<<std::endl;
+        myfile<<"The average U interquartile range was: "<<avHNu<<" +/- "<<stErru<<std::endl;
+        myfile<<"The average V interquartile range was: "<<avHNv<<" +/- "<<stErrv<<std::endl;
+        myfile<<"The average Y interquartile range was: "<<avHNy<<" +/- "<<stErry<<std::endl;
     }
+
+    myfile<<std::endl<<"Cut Ranges:"<<std::endl<<"Total: Min = "<<Tmin<<"  Max = "<<Tmax<<std::endl<<"U Plane: Min = "<<Umin<<"  Max = "<<Umax<<std::endl;
+    myfile<<"V Plane: Min = "<<Vmin<<"  Max = "<<Vmax<<std::endl<<"Y Plane: Min = "<<Ymin<<"  Max = "<<Ymax<<std::endl<<std::endl;
 
     int size = hitNo.size()/100;
 
@@ -801,6 +832,12 @@ bool SimpleWFAna::initialize() {
 
     myfile<<"Number of events removed using u, v and y info: ";
     PrintText(myfile,Removeduvy,NeutrinoTypeNo,size);
+    
+    size = size*100;
+    myfile<<"Timing Analysis:"<<std::endl<<"Total time per event= time( "<<timeTav/size<<"s ), clock( "<<clockTav/size<<"s )"<<std::endl;
+    myfile<<"Time getting data = time( "<<timeGetav/size<<"s ), clock( "<<clockGetav/size<<"s )"<<std::endl;
+    myfile<<"Time cutting = time( "<<timeCutav/size<<"s ), clock( "<<clockCutav/size<<"s )"<<std::endl;
+    myfile<<"Time filling histograms and removing events = time( "<<timeTav/size<<"s ), clock( "<<clockTav/size<<"s )"<<std::endl;
 
     myfile.close();
 

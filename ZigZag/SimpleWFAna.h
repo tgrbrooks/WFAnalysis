@@ -38,6 +38,7 @@
 #include <string>
 #include <fstream>
 #include <map>
+#include <time.h>
 
 namespace larlite {
   /**
@@ -66,6 +67,9 @@ namespace larlite {
     float _mean;
 
     int _evtN;
+
+    float timeTav, timeGetav, timeCutav, timeFillav;
+    float clockTav, clockGetav, clockCutav, clockFillav;
 
     // TDC standard deviations
     float stdTDC, UstdTDC, VstdTDC, YstdTDC;

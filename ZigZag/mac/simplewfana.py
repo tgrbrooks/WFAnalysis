@@ -30,7 +30,7 @@ while True:
                 print('Must be an integer between 1 and 7')
 """
 plane = 4
-for y in range (0,4):
+for y in [0,1,4,2,3]:
 	if y == 0:
 		option = 1
 		op_name = "HitNum"
@@ -47,7 +47,7 @@ for y in range (0,4):
 		option = 5
 		op_name = "TDCiqr"
 	# Loop over different tolerances changing file names each time
-	for x in range (0,6):
+	for x in range (3,4):
 		if x == 0:
 			T = 4
 			fname = op_name+"-nnbar4.root"
