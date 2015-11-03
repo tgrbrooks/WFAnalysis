@@ -47,29 +47,21 @@ namespace larlite {
    */
   class SimpleWFAna : public ana_base{
 
-  private:
-    // Declare histograms
-    TH1I  *h_HITS; 
-    TH1I  *h_UHITS;
-    TH1I  *h_VHITS;
-    TH1I  *h_YHITS;
-    TH2I  *h_UVHITS;
-    TH2I  *h_UYHITS;
-    TH2I  *h_VYHITS;
-    TH1I  *h_HITvAMP;
-    TH1D  *h_QCUT;
-    TH1D  *h_QNCUT;
-    TH1D  *h_TempHisto;
-    TH1D  *h_nCutTempHisto;
-
   protected: //Pretty sure this doesn't need to be protected
 
     float _mean;
 
     int _evtN;
 
-    float timeTav, timeGetav, timeCutav, timeFillav;
-    float clockTav, clockGetav, clockCutav, clockFillav;
+    int _hitNo, _hitNoU, _hitNoV, _hitNoY; 
+
+    float _TDCstd, _TDCstdU, _TDCstdV, _TDCstdY;
+
+    float _TDCiqr, _TDCiqrU, _TDCiqrV, _TDCiqrY;
+
+    float _ADCamp, _ADCampU, _ADCampV, _ADCampY;
+
+    float _WFint, _WFintU, _WFintV, _WFintY;
 
     // TDC standard deviations
     float stdTDC, UstdTDC, VstdTDC, YstdTDC;
@@ -85,54 +77,24 @@ namespace larlite {
     // wire number
     int wire;
     // event number
-    int event;
-
-    // number of removed events
-    std::vector <int> Removedu;
-    std::vector <int> Removedv;
-    std::vector <int> Removedy;
-    std::vector <int> Removeduv;
-    std::vector <int> Removeduy;
-    std::vector <int> Removedvy; 
-    std::vector <int> Removeduvy;
-    std::vector <int> RemovedType;
-    std::vector <int> NeutrinoTypeNo;     
-    
-    // array of events
-    std::vector<int> eventNo;
-    // array of number of hits
-    std::vector<double> hitNo, uhitNo, vhitNo, yhitNo;
-    // array of standard deviations
-    std::vector<double> sDev, usDev, vsDev, ysDev;
-    // vector of interaction types
-    std::vector<int> Type;
-    // vector of neutrino energies
-    std::vector<double> Qsq;
+    int event;    
 
     double Tolerance;
     // file names for use in simplewfana.py
     std::string nm;
     std::string fnm;
-    // cut limits to be set
-    double Tmin, Tmax, Umin, Umax, Vmin, Vmax, Ymin, Ymax; 
 
     // Vectors for TDC times of hits
     std::vector<int> TDCvec, UTDCvec, VTDCvec, YTDCvec;
     // Vectors for ADC amplitudes of hits
     std::vector<double> ADCvec, UADCvec, VADCvec, YADCvec;
 
-    int truthflag;
-
-    int option;
-    int plane;
-
-    std::multimap<int,double> TypeEnergy;
-    std::multimap<int,double> TypeEnergyBef;
+    TTree* _t_ch;
 
   public:
 
     /// Default constructor
-    SimpleWFAna(double T,std::string name,std::string fname,int op,int pln) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;fnm=fname; option=op;plane=pln; };
+    SimpleWFAna(double T,std::string name) { _name="SimpleWFAna"; _fout=0 ; Tolerance=T;nm=name;};
 
     /// Default destructor
     virtual ~SimpleWFAna(){};
@@ -159,72 +121,6 @@ namespace larlite {
     // Accessor functions for file names
     std::string GetName() {
       return nm;
-    }
-    std::string GetfName() {
-      return fnm;
-    }
-    // Accessor and mutator functions for cut values
-    double GetTmin() {
-      return Tmin;
-    }
-    void SetTmin(double t_min) {
-      Tmin = t_min;
-    }
-    double GetTmax() {
-      return Tmax;
-    }
-    void SetTmax(double t_max) {
-      Tmax = t_max;
-    }
-    double GetUmin() {
-      return Umin;
-    }
-    void SetUmin(double u_min) {
-      Umin = u_min;
-    }
-    double GetUmax() {
-      return Umax;
-    }
-    void SetUmax(double u_max) {
-      Umax = u_max;
-    }
-    double GetVmin() {
-      return Vmin;
-    }
-    void SetVmin(double v_min) {
-      Vmin = v_min;
-    }
-    double GetVmax() {
-      return Vmax;
-    }
-    void SetVmax(double v_max) {
-      Vmax = v_max;
-    }
-    double GetYmin() {
-      return Ymin;
-    }
-    void SetYmin(double y_min) {
-      Ymin = y_min;
-    }
-    double GetYmax() {
-      return Ymax;
-    }
-    void SetYmax(double y_max) {
-      Ymax = y_max;
-    }
-    // Accessor and mutator function for interaction type
-    std::vector<int> GetType() {
-      return Type;
-    }
-    void SetType(std::vector<int> type) {
-      Type = type;
-    }
-    // Accessor and mutator functions for energy
-    std::vector<double> GetQsq() {
-      return Qsq;
-    }
-    void SetQsq(std::vector<double> qsq) {
-      Qsq = qsq;
     }
 
   };
