@@ -293,7 +293,7 @@ bool SimpleWFAna::initialize() {
     _TDCiqrY = YiqrTDC;
 
     _t_ch->Fill();
-std::cout<<MampADC<<std::endl;
+
     _evtN += 1;
     return true;
   }
