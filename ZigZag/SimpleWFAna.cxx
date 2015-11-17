@@ -146,7 +146,7 @@ bool SimpleWFAna::initialize() {
   
   // Called for every event
   bool SimpleWFAna::analyze(storage_manager* storage) {
-if(_evtN<10){
+
     // Get rawdigit data
     auto wfs = storage->get_data<event_rawdigit>("daq");
     // Display error if rawdigit data not present
@@ -293,7 +293,7 @@ if(_evtN<10){
     _TDCiqrY = YiqrTDC;
 
     _t_ch->Fill();
-}
+
     _evtN += 1;
     return true;
   }
@@ -301,12 +301,7 @@ if(_evtN<10){
   // Called at end of event loop
   bool SimpleWFAna::finalize() {
 
-    // Get file names from python script
-    std::string fileName = SimpleWFAna::GetName();
-    const char * fName = fileName.c_str();
-
     // Save histograms to .root file
-    //TFile* outfile = new TFile(fName, "RECREATE");
     if(_fout){
       _fout->cd();
       std::cout << "writing ch tree" << std::endl;
