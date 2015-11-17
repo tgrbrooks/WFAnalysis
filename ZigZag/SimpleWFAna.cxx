@@ -51,13 +51,13 @@ std::vector<double> ADCamp(std::vector<short int> const & adcs, double T, double
     double max = 0;
     // Determine if wire is hit or not
     while(l<adcs.size()){
-	double y = abs(adcs[l]-offset);
+	double y = std::abs(adcs[l]-offset);
         if((y)>T){
             // If threshold is passed set max as this point
             max = y;
             // Loop over max size of peak and find the most extremal point
             for(size_t i = 1;i<150;i++){
-                double yp = abs(adcs[l+i]-offset);
+                double yp = std::abs(adcs[l+i]-offset);
                 if(yp>max){
 	            max = yp;
                 }
@@ -190,11 +190,11 @@ bool SimpleWFAna::initialize() {
         auto const& adcs = wf.ADCs();
         // Calculate Mean
         for(size_t j=0; j<adcs.size(); ++j)
-          _mean += adcs[j];
-        _mean /= ((float)adcs.size());
+          offset += adcs[j];
+        offset /= ((double)adcs.size());
 
         // Calculate offset from mean
-        offset = static_cast<double>(_mean);
+        //offset = static_cast<double>(_mean);
         // Get tolerance from python script
         T = SimpleWFAna::GetT();
 
@@ -210,8 +210,8 @@ bool SimpleWFAna::initialize() {
         // Loop over TDC time
         for(size_t j=0;j<adcs.size()-1;++j){
             // Get offset adjusted modulus of two points
-            double x1 = abs(adcs[j]-offset);
-            double x2 = abs(adcs[j+1]-offset);
+            double x1 = std::abs(adcs[j]-offset);
+            double x2 = std::abs(adcs[j+1]-offset);
             // If both above tolerance add up area between them
             if(x1>T&&x2>T){
                 intADC = intADC + 0.5*x1 + 0.5*x2;
@@ -293,7 +293,7 @@ bool SimpleWFAna::initialize() {
     _TDCiqrY = YiqrTDC;
 
     _t_ch->Fill();
-
+std::cout<<MampADC<<std::endl;
     _evtN += 1;
     return true;
   }
